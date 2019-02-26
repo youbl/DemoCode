@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E1791942-7D6F-44EF-B2A0-FDE262029326}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <RootNamespace>DemoCodeConsole</RootNamespace>
-    <AssemblyName>DemoCodeConsole</AssemblyName>
+    <ProjectGuid>{92E7887E-90B7-4629-959B-B7E3C27ABB87}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Beinet.Request</RootNamespace>
+    <AssemblyName>Beinet.Request</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -32,28 +30,26 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\NLog.4.5.11\lib\net45\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CoreTest\LoggingTest.cs" />
-    <Compile Include="MQBaseDemo\MQRun.cs" />
-    <Compile Include="MQBaseDemo\ConsumerDemo.cs" />
-    <Compile Include="MQBaseDemo\ConsumerTDemo.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="CustomWebRequest.cs" />
+    <Compile Include="ExtendHttpRequestStream.cs" />
+    <Compile Include="ExtendHttpWebRequest.cs" />
+    <Compile Include="ExtendHttpWebResponse.cs" />
+    <Compile Include="Filters\HttpWebRequestFilter.cs" />
+    <Compile Include="Filters\IHttpWebRequestFilter.cs" />
+    <Compile Include="Filters\NlogAgentFilter.cs" />
+    <Compile Include="Filters\UserAgentFilter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Library\Beinet.Core\Beinet.Core.csproj">
-      <Project>{86dd50d0-ad71-41e8-bc5f-b862ce6d6a3a}</Project>
-      <Name>Beinet.Core</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

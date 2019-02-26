@@ -45,7 +45,8 @@ namespace Beinet.Core.Logging
         /// <summary>
         /// 默认日志目录
         /// </summary>
-        static string defaultLogDir = Path.Combine(Environment.CurrentDirectory, "logs");
+        static string defaultLogDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+        // Environment.CurrentDirectory这个会是IIS目录，如 C:\Program Files (x86)\IIS Express
 
         /// <summary>
         /// 日志记录类名
