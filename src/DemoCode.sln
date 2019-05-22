@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoCodeWeb", "DemoCodeWeb\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.Request", "Library\Beinet.Request\Beinet.Request.csproj", "{92E7887E-90B7-4629-959B-B7E3C27ABB87}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.MQ", "Beinet.MQ\Beinet.MQ.csproj", "{96CD9447-2D7C-4673-BFE6-F51D36862E2E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,10 @@ Global
 		{92E7887E-90B7-4629-959B-B7E3C27ABB87}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{92E7887E-90B7-4629-959B-B7E3C27ABB87}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{92E7887E-90B7-4629-959B-B7E3C27ABB87}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96CD9447-2D7C-4673-BFE6-F51D36862E2E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96CD9447-2D7C-4673-BFE6-F51D36862E2E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96CD9447-2D7C-4673-BFE6-F51D36862E2E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96CD9447-2D7C-4673-BFE6-F51D36862E2E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -42,6 +48,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{86DD50D0-AD71-41E8-BC5F-B862CE6D6A3A} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
 		{92E7887E-90B7-4629-959B-B7E3C27ABB87} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
+		{96CD9447-2D7C-4673-BFE6-F51D36862E2E} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {199BBEEA-CF0A-41D7-B203-5A319CBD9F0F}
