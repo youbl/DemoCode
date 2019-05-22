@@ -37,6 +37,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CoreTest\WebTest.cs" />
     <Compile Include="CoreTest\LoggingTest.cs" />
     <Compile Include="MQBaseDemo\MQRun.cs" />
     <Compile Include="MQBaseDemo\ConsumerDemo.cs" />

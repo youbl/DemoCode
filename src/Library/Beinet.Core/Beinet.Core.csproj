@@ -35,6 +35,7 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IRunable.cs" />
@@ -52,6 +53,7 @@
     <Compile Include="Util\ConfigHelper.cs" />
     <Compile Include="Util\CryptoHelper.cs" />
     <Compile Include="Util\FileHelper.cs" />
+    <Compile Include="Util\WebHelper.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
