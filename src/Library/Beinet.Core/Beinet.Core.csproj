@@ -50,6 +50,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database\BaseSqlHelper.cs" />
+    <Compile Include="Database\SqlHelper.cs" />
     <Compile Include="IRunable.cs" />
     <Compile Include="Lock\LockDefault.cs" />
     <Compile Include="Lock\ILock.cs" />
