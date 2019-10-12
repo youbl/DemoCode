@@ -19,6 +19,16 @@ namespace Beinet.Core.Util
     /// </summary>
     public static class WebHelper
     {
+        static WebHelper()
+        {
+            //调大默认连接池
+            ServicePointManager.DefaultConnectionLimit = 1024;
+            //连接池中的TCP连接不使用Nagle算法
+            ServicePointManager.UseNagleAlgorithm = false;
+            //https证书验证回掉
+            ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
+        }
+
         private static readonly Encoding Utf8 = FileHelper.UTF8_NoBom;
         #region HttpContext相关
 
@@ -856,8 +866,7 @@ namespace Beinet.Core.Util
 
             // 访问Https网站时，加上特殊处理，用于处理证书有问题的网站
             bool isHttps = url.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
-            if (isHttps)
-                ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
+            if (isHttps){ }
             else if (!url.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
                 url = "http://" + url; // 只支持http和https协议，不考虑其它协议支持
 
