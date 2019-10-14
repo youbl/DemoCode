@@ -43,8 +43,11 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SqlFilter.cs" />
+    <Compile Include="IFilter.cs" />
     <Compile Include="SqlExecutePatcher.cs" />
-    <Compile Include="SqlExecuteLog.cs" />
+    <Compile Include="SqlFilterProcess.cs" />
+    <Compile Include="SqlFilterCollection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

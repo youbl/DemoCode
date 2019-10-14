@@ -37,13 +37,6 @@ namespace Beinet.SqlLog
                     return;
                 }
 
-                var commandType = assembly.GetType(typeName);
-                if (commandType == null)
-                {
-                    _logger.Warn($"{typeName} not found in {assembly}, patch fail.");
-                    return;
-                }
-
                 var para = new[]
                 {
                     typeof(CommandBehavior),
@@ -51,17 +44,7 @@ namespace Beinet.SqlLog
                     typeof(bool),
                     typeof(string)
                 };
-                var executeReaderMethod = commandType.GetMethod("RunExecuteReader",
-                    BindingFlags.Instance | BindingFlags.NonPublic, null,
-                    para, null);
-                if (executeReaderMethod == null)
-                {
-                    _logger.Warn($"RunExecuteReader not found in {typeName}, patch fail.");
-                    return;
-                }
-
-                DoPatch(executeReaderMethod, typeof(SqlExecuteLog).GetMethod("Prefix"));
-                _logger.Info($"{typeName}.RunExecuteReader was patched.");
+                PatchCommand(assembly, typeName, "RunExecuteReader", para);
             }
             catch (Exception exp)
             {
@@ -82,29 +65,37 @@ namespace Beinet.SqlLog
                     return;
                 }
 
-                var commandType = assembly.GetType(typeName);
-                if (commandType == null)
-                {
-                    _logger.Warn($"{typeName} not found in {assembly}, patch fail.");
-                    return;
-                }
-
-                var executeReaderMethod = commandType.GetMethod("ExecuteReader",
-                    BindingFlags.Instance | BindingFlags.Public, null,
-                    new[] {typeof(CommandBehavior)}, null);
-                if (executeReaderMethod == null)
-                {
-                    _logger.Warn($"ExecuteReader not found in {typeName}, patch fail.");
-                    return;
-                }
-
-                DoPatch(executeReaderMethod, typeof(SqlExecuteLog).GetMethod("Prefix"));
-                _logger.Info($"{typeName}.ExecuteReader was patched.");
+                PatchCommand(assembly, typeName, "ExecuteReader", new[] {typeof(CommandBehavior)});
             }
             catch (Exception exp)
             {
                 _logger.Error(nameof(PatchMySql) + " error: " + exp);
             }
+        }
+
+        static void PatchCommand(Assembly assembly, string typeName, string methodName, Type[] para)
+        {
+            var commandType = assembly.GetType(typeName);
+            if (commandType == null)
+            {
+                _logger.Warn($"{typeName} not found in {assembly}, patch fail.");
+                return;
+            }
+
+            var flg = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+            var executeReaderMethod = commandType.GetMethod(methodName, flg, null, para, null);
+            if (executeReaderMethod == null)
+            {
+                _logger.Warn($"{methodName} not found in {typeName}, patch fail.");
+                return;
+            }
+
+            var prefix = typeof(SqlFilterProcess).GetMethod("Prefix");
+            var postfix = typeof(SqlFilterProcess).GetMethod("Postfix");
+
+            DoPatch(executeReaderMethod, prefix, postfix);
+            _logger.Info($"{typeName}.{methodName} was patched.");
+
         }
 
         /// <summary>
