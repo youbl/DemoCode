@@ -13,6 +13,13 @@ namespace DemoForDynamicProxy
     {
         static void Main(string[] args)
         {
+            RunCastleProxy();
+
+            Console.Read();
+        }
+
+        static void RunLinfuProxy()
+        {
             // 创建指定接口的实例代理
             var obj = ProxyLoader.GetProxy<DemoInf>();
             obj.NoReturn();
@@ -22,11 +29,15 @@ namespace DemoForDynamicProxy
             obj = ProxyLoader.GetProxy<DemoInf>(typeof(DeomClass));
             obj.NoReturn();
             obj.NoReturn("abcd", 123);
-           
-            var tmp = ((DeomClass) obj).DemoMethod(456, "daf");
-            Console.WriteLine(tmp);
 
-            Console.Read();
+            var tmp = ((DeomClass)obj).DemoMethod(456, "daf");
+            Console.WriteLine(tmp);
+        }
+
+        static void RunCastleProxy()
+        {
+            var obj = ProxyLoaderByCastle.GetProxy<DemoInf>(typeof(DeomClass));
+            obj.NoReturn();
         }
     }
 

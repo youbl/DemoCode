@@ -6,7 +6,8 @@ using LinFu.DynamicProxy;
 namespace DemoForDynamicProxy
 {
     /// <summary>
-    /// 这个Demo用于演示，如何创建一个没有编写实现的接口实例.
+    /// 这个Demo 基于 LinFu.DynamicProxy，
+    /// 用于演示，如何创建一个没有编写实现的接口实例.
     /// 使用场景：一些业务项目只需要定义接口，然后由框架进行统一实现的场景；
     /// 举例1：类似于Java的Feign，业务只需要定义接口和Attribute声明，框架层统一完成http请求。
     /// 举例2：类似于Java的JPA，业务只需要定义仓储层接口，框架层统一完成数据库操作
@@ -41,7 +42,7 @@ namespace DemoForDynamicProxy
 
 
         /// <summary>
-        /// 返回指定接口类型的实例（代理类，不需要实现）
+        /// 创建指定接口和指定类的实例代理（代理类，不需要实现）
         /// </summary>
         /// <typeparam name="TInterface"></typeparam>
         /// <param name="instanceType"></param>
@@ -52,7 +53,7 @@ namespace DemoForDynamicProxy
         }
 
         /// <summary>
-        /// 返回指定接口类型的实例（代理类，不需要实现）
+        /// 创建指定接口和指定类的实例代理（代理类，不需要实现）
         /// </summary>
         /// <param name="interfaceType"></param>
         /// <param name="instanceType"></param>
