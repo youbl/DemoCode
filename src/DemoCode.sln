@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.SqlLogTest", "Beinet
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{E8592A62-126C-44BB-8F51-A59486CE376D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoForDynamicProxy", "DemoForDynamicProxy\DemoForDynamicProxy.csproj", "{89BF004F-2BF1-40C8-B4C9-8E6C3A0DEF99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{C204C142-3B65-46A3-A263-68636D1DD411}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C204C142-3B65-46A3-A263-68636D1DD411}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C204C142-3B65-46A3-A263-68636D1DD411}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89BF004F-2BF1-40C8-B4C9-8E6C3A0DEF99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89BF004F-2BF1-40C8-B4C9-8E6C3A0DEF99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89BF004F-2BF1-40C8-B4C9-8E6C3A0DEF99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89BF004F-2BF1-40C8-B4C9-8E6C3A0DEF99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

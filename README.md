@@ -11,4 +11,9 @@ Library目录：
 1、DemoCodeConsole.MQBaseDemo.MQRun:  
 基于生产消费者模式的Demo演示代码。  
 
-2、  
+2、DemoForDynamicProxy：  
+演示如何只定义接口，不编写实现，也能创建接口实例的过程。  
+使用场景：一些业务项目只需要定义接口，然后由框架进行统一实现的场景；  
+举例1：类似于Java的Feign，业务只需要定义接口和Attribute声明，框架层统一完成http请求。  
+举例2：类似于Java的JPA，业务只需要定义仓储层接口，框架层统一完成数据库操作  
+  
