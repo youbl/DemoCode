@@ -27,7 +27,7 @@ namespace Beinet.SqlLogTest
 
             object ret;
             string val = "1578";
-            using (var connection = new SqlConnection("server=10.2.5.2;database=master;uid=sa;pwd=mike.123"))
+            using (var connection = new SqlConnection("server=10.2.5.2;database=master;uid=sa;pwd=123456"))
             using (var command = connection.CreateCommand())
             {
                 connection.Open();
@@ -49,7 +49,7 @@ namespace Beinet.SqlLogTest
 
             object ret;
             var constr =
-                "server=10.2.5.2;Port=3306;Database=mysql;uid=root;pwd=mike.123;Pooling=True;Max Pool Size=10;Charset=utf8";
+                "server=10.2.5.2;Port=3306;Database=mysql;uid=root;pwd=123456;Pooling=True;Max Pool Size=10;Charset=utf8";
             string val = "1578";
             using (var connection = new MySqlConnection(constr))
             using (var command = connection.CreateCommand())
