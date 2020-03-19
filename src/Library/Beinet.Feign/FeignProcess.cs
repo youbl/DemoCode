@@ -18,11 +18,6 @@ namespace Beinet.Feign
     public class FeignProcess
     {
         private const string GET = "GET";
-
-        public FeignClientAttribute Att { get; set; }
-
-        static Dictionary<string, object> _configs = new Dictionary<string, object>();
-
         static FeignProcess()
         {
             foreach (string setting in ConfigurationManager.AppSettings)
@@ -36,6 +31,68 @@ namespace Beinet.Feign
             //ServicePointManager.UseNagleAlgorithm = false;
             //https证书验证回调
             ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
+        }
+
+        private string _url;
+
+        /// <summary>
+        /// Url前缀
+        /// </summary>
+        public string Url
+        {
+            get => _url;
+            set
+            {
+                _url = value;
+                ParseUrl();
+            }
+        }
+
+        private IFeignConfig _config = new FeignDefaultConfig();
+
+        /// <summary>
+        /// 编码解码配置
+        /// </summary>
+        public IFeignConfig Config
+        {
+            get => _config;
+            set
+            {
+                _config = value;
+                Interceptors = Config.GetInterceptor();
+                ParseUrl();
+            }
+        }
+
+        /// <summary>
+        /// 请求拦截器
+        /// </summary>
+        internal List<IRequestInterceptor> Interceptors { get; private set; }
+
+        private void ParseUrl()
+        {
+            if (Interceptors != null && !string.IsNullOrEmpty(_url))
+            {
+                foreach (var interceptor in Interceptors)
+                {
+                    _url = interceptor.OnCreate(_url);
+                }
+            }
+        }
+
+        static Dictionary<string, object> _configs = new Dictionary<string, object>();
+
+        /// <summary>
+        /// 泛型版本HTTP调用
+        /// </summary>
+        /// <typeparam name="T">方法的返回参数类型</typeparam>
+        /// <param name="methodAtt">方法的路由相关信息</param>
+        /// <param name="args">方法的入参数列表</param>
+        /// <returns></returns>
+        public T Process<T>(RequestMappingAttribute methodAtt, Dictionary<string, ArgumentItem> args)
+        {
+            var obj = Process(methodAtt, args, typeof(T));
+            return (T) obj;
         }
 
         /// <summary>
@@ -54,18 +111,15 @@ namespace Beinet.Feign
                 method = method.ToUpper();
 
             // 查找POST参数数据
-            object bodyArg = null;
-            if (args != null && args.Count > 0)
-                bodyArg = args.FirstOrDefault(item => item.Value.Type == ArgType.Body);
-
+            var bodyArg = args?.FirstOrDefault(item => item.Value.Type == ArgType.Body).Value?.Value;
             if (bodyArg != null && method == GET)
             {
                 // 有body数据时，强制修改为POST，Java也是这么做的
                 method = "POST";
             }
-
+            
             // 拼接url和路由
-            var url = CombineUrl(Att.Url, methodAtt.Route);
+            var url = CombineUrl(Url, methodAtt.Route);
             // 用配置和参数替换url里的内容
             url = ParseUrl(url, args);
 
@@ -76,17 +130,20 @@ namespace Beinet.Feign
             {
                 var postStr = "";
                 if (bodyArg != null)
-                    postStr = Att.Config.Encoding(bodyArg);
+                    postStr = Config.Encoding(bodyArg);
 
-                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Att.Config.GetInterceptor());
-                var ret = Att.Config.Decoding(httpReturn, returnType);
+                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors);
+                if (returnType == typeof(void))
+                    return null;
+
+                var ret = Config.Decoding(httpReturn, returnType);
                 realType = ret.GetType();
                 if (returnType.IsInstanceOfType(ret))
                     return ret;
             }
             catch (Exception exp)
             {
-                var handledExp = Att.Config.ErrorHandle(exp);
+                var handledExp = Config.ErrorHandle(exp);
                 if (handledExp != null)
                     throw handledExp;
 
@@ -146,7 +203,7 @@ namespace Beinet.Feign
                     if (arg.Type != ArgType.Param)
                         continue;
 
-                    var encodingVal = System.Web.HttpUtility.UrlEncode(Convert.ToString(arg.Value));
+                    var encodingVal = HttpUtility.UrlEncode(Convert.ToString(arg.Value));
                     sbArgs.AppendFormat("{0}={1}&", arg.HttpName, encodingVal);
                 }
 

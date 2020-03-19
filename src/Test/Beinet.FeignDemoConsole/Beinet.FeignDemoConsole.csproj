@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{288759AB-5459-45D0-8F0C-EEDC17E72839}</ProjectGuid>
+    <ProjectGuid>{091D2C88-6A42-45E9-9B39-F0BD2CE329D8}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>Beinet.FeignDemoConsole</RootNamespace>
     <AssemblyName>Beinet.FeignDemoConsole</AssemblyName>
@@ -32,16 +32,22 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.12.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FeignApiTest.cs" />
-    <Compile Include="FeignApiTestWithConfig.cs" />
-    <Compile Include="FeignConfigDeom.cs" />
+    <Compile Include="FeignTestConfig.cs" />
+    <Compile Include="FeignTestPlace.cs" />
+    <Compile Include="FeignTestHeader.cs" />
+    <Compile Include="FeignTestQuick.cs" />
     <Compile Include="FeignDtoDemo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="FeignConfigDeom.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Library\Beinet.Feign\Beinet.Feign.csproj">
@@ -51,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
 
 namespace Beinet.Feign
 {
@@ -12,9 +9,24 @@ namespace Beinet.Feign
     public interface IRequestInterceptor
     {
         /// <summary>
-        /// Web请求拦截方法
+        /// 对FeignClient的Url进行自定义处理
         /// </summary>
-        /// <param name="request"></param>
-        void Apply(HttpWebRequest request);
+        /// <param name="originUrl">FeignClient的Url属性</param>
+        /// <returns></returns>
+        string OnCreate(string originUrl);
+
+        /// <summary>
+        /// 在HttpWebRequest.GetResponse之前执行的方法
+        /// </summary>
+        /// <param name="request">请求对象</param>
+        void BeforeRequest(HttpWebRequest request);
+
+        /// <summary>
+        /// 在HttpWebRequest.GetResponse之后执行的方法
+        /// </summary>
+        /// <param name="request">请求对象</param>
+        /// <param name="response">响应对象</param>
+        /// <param name="exception">请求中出现的异常</param>
+        void AfterRequest(HttpWebRequest request, HttpWebResponse response, Exception exception);
     }
 }

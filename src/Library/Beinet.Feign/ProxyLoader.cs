@@ -43,10 +43,17 @@ namespace Beinet.Feign
                     throw new Exception("未找到FeignClient特性配置");
                 if (atts[0].Url == null || (atts[0].Url = atts[0].Url.Trim()).Length == 0)
                     throw new Exception("FeignClient特性配置Url不能为空");
+                var feignAtt = atts[0];
 
                 var wrapper = new ProxyInvokeWrapper();
-                var ret = (FeignProcess)_factory.CreateProxy(typeof(FeignProcess), wrapper, type);
-                ret.Att = atts[0];
+                var ret = (FeignProcess) _factory.CreateProxy(typeof(FeignProcess), wrapper, type);
+
+                if (feignAtt.Configuration == null)
+                    ret.Config = new FeignDefaultConfig();
+                else
+                    ret.Config = (IFeignConfig) Activator.CreateInstance(feignAtt.Configuration);
+
+                ret.Url = feignAtt.Url;
                 return ret;
             });
         }
@@ -58,6 +65,7 @@ namespace Beinet.Feign
         /// </summary>
         internal class ProxyInvokeWrapper : IInvokeWrapper
         {
+
             public void BeforeInvoke(InvocationInfo info)
             {
             }
@@ -69,6 +77,16 @@ namespace Beinet.Feign
                     throw new Exception("实例创建有问题: " + info.Target.GetType());
 
                 var method = info.TargetMethod;
+                switch (method.Name)
+                {
+                    case "GetHashCode":
+                        return this.GetHashCode();
+                    case "Equals":
+                        return this.Equals(info.Arguments?.FirstOrDefault());
+                    case "ToString":
+                        return this.ToString();
+                }
+
                 var httpAtt = TypeHelper.GetRequestMappingAttribute(method);
                 var args = GetArguments(method, info.Arguments);
 
@@ -79,7 +97,7 @@ namespace Beinet.Feign
             {
             }
 
-
+            
             static Dictionary<string, ArgumentItem> GetArguments(MethodInfo method, object[] values)
             {
                 var methodArgs = TypeHelper.GetArgs(method);

@@ -31,11 +31,7 @@ namespace Beinet.Feign
                 _url = value;
             }
         }
-
-        /// <summary>
-        /// 默认的编解码配置类
-        /// </summary>
-        public IFeignConfig Config { get; private set; } = new FeignDefaultConfig();
+        
 
         private Type _configuration;
 
@@ -53,10 +49,6 @@ namespace Beinet.Feign
                     throw new Exception("配置类必须实现IFeignConfig");
 
                 _configuration = value;
-
-                Config = (IFeignConfig)Activator.CreateInstance(value);
-                // Assembly.CreateInstance底层也是调用 Activator.CreateInstance
-                // Config = (IFeignConfig) value.Assembly.CreateInstance(value.FullName, false);
             }
         }
     }

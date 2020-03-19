@@ -12,6 +12,9 @@ namespace Beinet.Feign
     /// </summary>
     internal static class WebHelper
     {
+        public delegate void BeforeRequest(HttpWebRequest request);
+
+        public delegate void AfterRequest(HttpWebRequest request, HttpWebResponse response);
 
         /// <summary>
         /// 获取指定url的响应字符串
@@ -22,13 +25,16 @@ namespace Beinet.Feign
         /// <param name="headers">要传输的header清单</param>
         /// <param name="interceptors">拦截器清单</param>
         /// <returns></returns>
-        public static string GetPage(string url, string method, string postStr, Dictionary<string, string> headers, List<IRequestInterceptor> interceptors)
+        public static string GetPage(string url, string method, string postStr,
+            Dictionary<string, string> headers,
+            List<IRequestInterceptor> interceptors)
         {
             if (!IsUrl(url))
                 url = "http://" + url;
+            
             var isGet = method == "GET"; // GET时，不对参数进行序列化处理
 
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            var request = (HttpWebRequest) WebRequest.Create(url);
             request.Method = method;
             request.AllowAutoRedirect = false;
             request.Headers.Add("Accept-Encoding", "gzip, deflate");
@@ -57,12 +63,12 @@ namespace Beinet.Feign
             {
                 foreach (var interceptor in interceptors)
                 {
-                    interceptor.Apply(request);
+                    interceptor.BeforeRequest(request);
                 }
             }
 
             if (request.UserAgent == null)
-                request.UserAgent = "Beinet1.0-Feign";
+                request.UserAgent = "Beinet feign.net1.0";
 
             if (!isGet)
             {
@@ -87,9 +93,31 @@ namespace Beinet.Feign
                 }
             }
 
-            using (var response = (HttpWebResponse)request.GetResponse())
+            try
             {
-                return GetResponseString(response);
+                using (var response = (HttpWebResponse) request.GetResponse())
+                {
+                    if (interceptors != null)
+                    {
+                        foreach (var interceptor in interceptors)
+                        {
+                            interceptor.AfterRequest(request, response, null);
+                        }
+                    }
+
+                    return GetResponseString(response);
+                }
+            }
+            catch (Exception exp)
+            {
+                if (interceptors != null)
+                {
+                    foreach (var interceptor in interceptors)
+                    {
+                        interceptor.AfterRequest(request, null, exp);
+                    }
+                }
+                throw;
             }
         }
 
