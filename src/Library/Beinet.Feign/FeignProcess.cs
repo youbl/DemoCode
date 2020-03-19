@@ -5,7 +5,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Web;
 
 namespace Beinet.Feign
 {
@@ -26,34 +29,56 @@ namespace Beinet.Feign
             {
                 _configs[setting] = ConfigurationManager.AppSettings[setting];
             }
+
+            //调大默认连接池
+            ServicePointManager.DefaultConnectionLimit = 1024;
+            //连接池中的TCP连接不使用Nagle算法
+            //ServicePointManager.UseNagleAlgorithm = false;
+            //https证书验证回调
+            ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
         }
 
         /// <summary>
         /// 主调方法
         /// </summary>
-        /// <param name="att"></param>
+        /// <param name="methodAtt">方法的路由相关信息</param>
         /// <param name="args">方法的入参数列表</param>
         /// <param name="returnType">方法的返回参数类型</param>
         /// <returns></returns>
-        public object Process(RequestMappingAttribute att, Dictionary<string, object> args, Type returnType)
+        public object Process(RequestMappingAttribute methodAtt, Dictionary<string, ArgumentItem> args, Type returnType)
         {
-            var method = att.Method;
+            var method = methodAtt.Method;
             if (string.IsNullOrEmpty(method))
                 method = GET;
             else
                 method = method.ToUpper();
 
-            // 拼接url和路由
-            var url = CombineUrl(Att.Url, att.Route);
-            // 用配置和参数替换url里的内容
-            url = ParseUrl(url, args, method == GET);
+            // 查找POST参数数据
+            object bodyArg = null;
+            if (args != null && args.Count > 0)
+                bodyArg = args.FirstOrDefault(item => item.Value.Type == ArgType.Body);
 
-            var bodyArg = args != null && args.Count > 0 ? args.First().Value : null;
+            if (bodyArg != null && method == GET)
+            {
+                // 有body数据时，强制修改为POST，Java也是这么做的
+                method = "POST";
+            }
+
+            // 拼接url和路由
+            var url = CombineUrl(Att.Url, methodAtt.Route);
+            // 用配置和参数替换url里的内容
+            url = ParseUrl(url, args);
+
+            var headers = CombineHeaders(methodAtt.Headers, args);
 
             Type realType;
             try
             {
-                var httpReturn = GetPage(url, method, bodyArg);
+                var postStr = "";
+                if (bodyArg != null)
+                    postStr = Att.Config.Encoding(bodyArg);
+
+                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Att.Config.GetInterceptor());
                 var ret = Att.Config.Decoding(httpReturn, returnType);
                 realType = ret.GetType();
                 if (returnType.IsInstanceOfType(ret))
@@ -76,24 +101,11 @@ namespace Beinet.Feign
         /// </summary>
         /// <param name="url"></param>
         /// <param name="args"></param>
-        /// <param name="isGet"></param>
         /// <returns></returns>
-        static string ParseUrl(string url, Dictionary<string, object> args, bool isGet)
+        static string ParseUrl(string url, Dictionary<string, ArgumentItem> args)
         {
             if (string.IsNullOrEmpty(url))
                 throw new Exception("url不允许为空");
-
-            if (args == null)
-                args = _configs;
-            else
-            {
-                // 把配置加入参数列表
-                foreach (var config in _configs)
-                {
-                    if (!args.ContainsKey(config.Key))
-                        args.Add(config.Key, config.Value);
-                }
-            }
 
             int idx = -1;
             do
@@ -108,136 +120,53 @@ namespace Beinet.Feign
                     throw new Exception("不允许出现空占位符");
 
                 var argName = url.Substring(idx + 1, endIdx - idx - 1);
-                if (args == null)
-                    throw new Exception($"占位符{{{argName}}}不存在，因为参数列表为空");
 
-                if (!args.TryGetValue(argName, out var val))
+                object val;
+                // 先取参数列表
+                if (args != null && args.TryGetValue(argName, out var item))
                 {
-                    throw new Exception($"占位符{{{argName}}}不存在");
+                    val = item.Value;
+                }
+                // 再取config配置列表
+                else if (!_configs.TryGetValue(argName, out val))
+                {
+                    throw new Exception($"占位符{{{argName}}}在参数列表或配置文件中，均不存在");
                 }
 
                 url = url.Replace("{" + argName + "}", Convert.ToString(val));
             } while (true);
 
-            if (isGet && args != null && args.Count > 0)
+            // 拼接列表里的查询参数
+            if (args != null && args.Count > 0)
             {
                 var sbArgs = new StringBuilder();
-                if (url.IndexOf('?') > 0)
-                    sbArgs.Append('&');
-                else
-                    sbArgs.Append('?');
                 foreach (var pair in args)
                 {
-                    var encodingVal = System.Web.HttpUtility.UrlEncode(Convert.ToString(pair.Value));
-                    sbArgs.AppendFormat("{0}={1}&", pair.Key, encodingVal);
+                    var arg = pair.Value;
+                    if (arg.Type != ArgType.Param)
+                        continue;
+
+                    var encodingVal = System.Web.HttpUtility.UrlEncode(Convert.ToString(arg.Value));
+                    sbArgs.AppendFormat("{0}={1}&", arg.HttpName, encodingVal);
                 }
 
-                url += sbArgs;
+                if (sbArgs.Length > 0)
+                {
+                    sbArgs.Insert(0, url.IndexOf('?') > 0 ? '&' : '?');
+                    url += sbArgs;
+                }
             }
 
             return url;
         }
 
-        string GetPage(string url, string method, object arg)
-        {
-            if (!IsUrl(url))
-                url = "http://" + url;
-            var isGet = method == GET; // GET时，不对参数进行序列化处理
 
-            var request = (HttpWebRequest) WebRequest.Create(url);
-            request.Method = method;
-            request.AllowAutoRedirect = false;
-            request.Headers.Add("Accept-Encoding", "gzip, deflate");
-            request.Headers.Add("Accept-Charset", Encoding.UTF8.WebName);
-            // 禁止缓存可能导致的bug
-            request.Headers.Add(HttpRequestHeader.CacheControl, "no-cache");
 
-            var interceptors = Att.Config.GetInterceptor();
-            if (interceptors != null)
-            {
-                foreach (var interceptor in interceptors)
-                {
-                    interceptor.Apply(request);
-                }
-            }
-
-            if (!isGet)
-            {
-                if (request.ContentType == null)
-                    request.ContentType = "application/json";
-
-                var postStr = "";
-                if (arg != null)
-                {
-                    postStr = Att.Config.Encoding(arg);
-                }
-
-                if (string.IsNullOrEmpty(postStr))
-                {
-                    request.ContentLength = 0; // POST必须设置的属性
-                }
-                else
-                {
-                    // 把数据转换为字节数组
-                    byte[] l_data = Encoding.UTF8.GetBytes(postStr);
-                    // request.ContentLength = l_data.Length;  // 可以不设置，写流会自动设置Length
-                    // 打开GetRequestStream之后，不允许设置ContentLength，会抛异常
-                    // ContentLength设置后，reqStream.Close前必须写入相同字节的数据，否则Request会被取消
-                    using (var newStream = request.GetRequestStream())
-                    {
-                        newStream.Write(l_data, 0, l_data.Length);
-                    }
-                }
-            }
-
-            using (var response = (HttpWebResponse) request.GetResponse())
-            {
-                return GetResponseString(response);
-            }
-        }
-
-        public static string GetResponseString(HttpWebResponse response, Encoding encoding = null)
-        {
-            encoding = encoding ?? Encoding.UTF8;
-            using (var stream = response.GetResponseStream())
-            {
-                if (stream == null)
-                    return "GetResponseStream is null";
-                string str;
-                string contentEncoding = response.ContentEncoding.ToLower();
-                if (contentEncoding.Contains("gzip"))
-                    using (Stream stream2 = new GZipStream(stream, CompressionMode.Decompress))
-                        str = GetFromStream(stream2, encoding);
-                else if (contentEncoding.Contains("deflate"))
-                    using (Stream stream2 = new DeflateStream(stream, CompressionMode.Decompress))
-                        str = GetFromStream(stream2, encoding);
-                else
-                    str = GetFromStream(stream, encoding);
-                return str;
-            }
-        }
-
-        static string GetFromStream(Stream stream, Encoding encoding)
-        {
-            using (StreamReader reader = new StreamReader(stream, encoding))
-                return reader.ReadToEnd();
-        }
-
-        static bool IsUrl(string str)
-        {
-            if (str.IndexOf("http://", StringComparison.OrdinalIgnoreCase) != 0 &&
-                str.IndexOf("https://", StringComparison.OrdinalIgnoreCase) != 0)
-                return false;
-
-//            if (str.IndexOf('\n') >= 0)
-//                return false;
-            return true;
-        }
 
         static string CombineUrl(string url, string route)
         {
             route = route ?? "";
-            if (IsUrl(route))
+            if (WebHelper.IsUrl(route))
                 return route;
 
             if (route.Length <=0 || route[0] != '/')
@@ -251,5 +180,44 @@ namespace Beinet.Feign
             return url;
         }
 
+        static Dictionary<string, string> CombineHeaders(string[] headers, Dictionary<string, ArgumentItem> args)
+        {
+            var ret = new Dictionary<string, string>();
+            if (headers != null && headers.Length > 0)
+            {
+                foreach (var header in headers)
+                {
+                    var idx = header.IndexOf('=');
+                    if (idx <= 0)
+                        continue;
+
+                    var key = header.Substring(0, idx).Trim();
+                    if (key.Length <= 0)
+                        continue;
+                    var val = header.Substring(idx + 1).Trim();
+                    ret[key] = val;
+                }
+            }
+
+            if (args != null && args.Count > 0)
+            {
+                foreach (var header in args)
+                {
+                    if (header.Value.Type != ArgType.Header)
+                        continue;
+
+                    ret[header.Value.HttpName] = HttpUtility.UrlEncode(Convert.ToString(header.Value.Value));
+                }
+            }
+
+            return ret;
+        }
+
+        static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
+        {
+            // Always accept
+            //Console.WriteLine("accept" + certificate.GetName());
+            return true; //总是接受
+        }
     }
 }

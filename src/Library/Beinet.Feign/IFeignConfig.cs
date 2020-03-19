@@ -74,7 +74,7 @@ namespace Beinet.Feign
                 {
                     using (var responseErr = (HttpWebResponse)webExp.Response)
                     {
-                        var result = FeignProcess.GetResponseString(responseErr);
+                        var result = WebHelper.GetResponseString(responseErr);
                         return new Exception(result, webExp);
                         // return Decoding(result, errorType);
                     }

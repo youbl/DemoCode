@@ -43,10 +43,13 @@
     <Reference Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="RequestArgAttribute.cs" />
     <Compile Include="RequestMappingAttribute.cs" />
     <Compile Include="IFeignConfig.cs" />
     <Compile Include="IRequestInterceptor.cs" />
     <Compile Include="FeignProcess.cs" />
+    <Compile Include="ArgumentItem.cs" />
+    <Compile Include="WebHelper.cs" />
     <Compile Include="TypeHelper.cs" />
     <Compile Include="ProxyLoader.cs" />
     <Compile Include="FeignClientAttribute.cs" />

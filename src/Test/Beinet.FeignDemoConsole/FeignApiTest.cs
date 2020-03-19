@@ -20,21 +20,21 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [GetMapping("test/api.aspx?flg=2")]
-        int GetAdd(int n1, int n2);
+        int GetAdd([RequestNone]int n1, int n2);
 
         /// <summary>
         /// 有参数 POST返回数值
         /// </summary>
         /// <returns></returns>
         [PostMapping("test/api.aspx?flg=2&n1={num1}&n2={num2}")]
-        int PostAdd(int num1, int num2);
+        int PostAdd([RequestParam]int num1, [RequestParam]int num2);
 
 
         /// <summary>
         /// 直接返回响应的完整字符串
         /// </summary>
         /// <returns></returns>
-        [GetMapping("test/api.aspx")]
+        [GetMapping("test/api.aspx", Headers = new []{"abcd", "efgh=ijklmn=dd df", "aabc=", "=ddddd","user-agent  = b einet1.0 alpha "})]
         string GetUserStr();
 
         /// <summary>
@@ -50,7 +50,7 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [GetMapping("test/api.aspx")]
-        FeignDtoDemo GetUser(int id, string name);
+        FeignDtoDemo GetUser(int id, [RequestParam]string name, [RequestHeader] string argHeader);
 
 
 
@@ -66,7 +66,7 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [PostMapping("test/api.aspx")]
-        FeignDtoDemo PostUser(int id, string name);
+        FeignDtoDemo PostUser(int id, [RequestParam]string name);
 
         /// <summary>
         /// POST对象，返回对象
@@ -80,7 +80,7 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [PostMapping("test/api.aspx?id={para2}")]
-        FeignDtoDemo PostUser(FeignDtoDemo user, int para2);
+        FeignDtoDemo PostUser(FeignDtoDemo user, [RequestParam]int para2);
     }
     
 

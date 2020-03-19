@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using LinFu.DynamicProxy;
 
@@ -68,7 +69,7 @@ namespace Beinet.Feign
                     throw new Exception("实例创建有问题: " + info.Target.GetType());
 
                 var method = info.TargetMethod;
-                var httpAtt = TypeHelper.GetMappingAttribute(method);
+                var httpAtt = TypeHelper.GetRequestMappingAttribute(method);
                 var args = GetArguments(method, info.Arguments);
 
                 return instance.Process(httpAtt, args, method.ReturnType);
@@ -79,26 +80,49 @@ namespace Beinet.Feign
             }
 
 
-            static Dictionary<string, object> GetArguments(MethodInfo method, object[] args)
+            static Dictionary<string, ArgumentItem> GetArguments(MethodInfo method, object[] values)
             {
-                var paras = method.GetParameters();
-                if (paras.Length == 0)
+                var methodArgs = TypeHelper.GetArgs(method);
+                if (methodArgs == null || methodArgs.Count == 0)
                     return null;
 
-                var ret = new Dictionary<string, object>();
+                var bodyArgNum = 0; // 有几个body参数，不允许超过1个
+                var ret = new Dictionary<string, ArgumentItem>();
                 var idx = 0;
-                var valuesLen = args != null ? args.Length : 0;
-                foreach (var para in paras)
+                var valuesLen = values?.Length ?? 0;
+                foreach (var argument in methodArgs)
                 {
-                    if (idx < valuesLen)
+                    var para = argument.Key;
+                    var att = argument.Value;
+                    var item = new ArgumentItem();
+                    ret.Add(para.Name, item);
+
+                    item.Name = para.Name;
+                    if (att == null)
                     {
-                        // ReSharper disable once PossibleNullReferenceException 这里不可能为null的，因为上面判断了
-                        ret.Add(para.Name, args[idx]);
+                        item.HttpName = item.Name;
+                        item.Type = ArgType.Body;
                     }
                     else
                     {
-                        ret.Add(para.Name, null);
+                        item.HttpName = att.Name.Length <= 0 ? item.Name : att.Name;
+                        item.Type = att.Type;
                     }
+
+                    if (item.Type == ArgType.Body)
+                    {
+                        bodyArgNum++;
+                        if (bodyArgNum > 1)
+                            throw new Exception(
+                                $"Body参数只允许一个，当前: {ret.Values.Aggregate("", (s, argumentItem) => s + argumentItem.Name + ",")}");
+                    }
+
+                    if (idx < valuesLen)
+                    {
+                        // ReSharper disable once PossibleNullReferenceException 这里不可能为null的，因为上面判断了
+                        item.Value = values[idx];
+                    }
+
                     idx++;
                 }
 

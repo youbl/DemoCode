@@ -2,14 +2,14 @@
 
 namespace Beinet.FeignDemoConsole
 {
-    [FeignClient("", Url = "https://www.beinet.cn", Configuration = typeof(FeignConfigDeom))]//
+    [FeignClient("", Url = "https://47.107.125.247", Configuration = typeof(FeignConfigDeom))]//
     public interface FeignApiTestWithConfig
     {
         /// <summary>
         /// 无参数 返回数值
         /// </summary>
         /// <returns></returns>
-        [GetMapping("test/api.aspx?flg=1")]
+        [GetMapping("test/api.aspx?flg=1", Headers = new[] { "abcde= ffff", "user-agent=asfdsadf" })]
         int GetMs();
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [PostMapping("test/api.aspx")]
-        FeignDtoDemo PostUser(int id, string name);
+        FeignDtoDemo PostUser(int id, [RequestParam]string name);
 
         /// <summary>
         /// POST对象，返回对象
@@ -77,7 +77,7 @@ namespace Beinet.FeignDemoConsole
         /// </summary>
         /// <returns></returns>
         [PostMapping("test/api.aspx?id={para2}")]
-        FeignDtoDemo PostUser(FeignDtoDemo user, int para2);
+        FeignDtoDemo PostUser(FeignDtoDemo user, [RequestParam]int para2);
     }
 
 }

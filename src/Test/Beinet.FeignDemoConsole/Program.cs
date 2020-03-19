@@ -47,7 +47,7 @@ namespace Beinet.FeignDemoConsole
             WriteMsg(user.ToString());
 
             // 有参的GET调用，返回对象
-            user = feignDemo.GetUser(12, "游北亮");
+            user = feignDemo.GetUser(12, "游北亮", "我是Header的值");
             WriteMsg(user.ToString());
 
             // 无参的POST调用，返回对象

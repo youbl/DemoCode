@@ -15,11 +15,11 @@ namespace Beinet.Feign
         static ConcurrentDictionary<Type, List<Attribute>> _typeAtts =
             new ConcurrentDictionary<Type, List<Attribute>>();
 
-        static ConcurrentDictionary<MethodInfo, List<Attribute>> _methodAtts =
-            new ConcurrentDictionary<MethodInfo, List<Attribute>>();
-
         static ConcurrentDictionary<MethodInfo, RequestMappingAttribute> _methodRequestAtts =
             new ConcurrentDictionary<MethodInfo, RequestMappingAttribute>();
+
+        static ConcurrentDictionary<MethodInfo, Dictionary<ParameterInfo, RequestArgAttribute>> _methodArgs =
+            new ConcurrentDictionary<MethodInfo, Dictionary<ParameterInfo, RequestArgAttribute>>();
 
         /// <summary>
         /// 缓存并返回指定类的所有特性列表
@@ -55,43 +55,8 @@ namespace Beinet.Feign
 
             return ret;
         }
-
-
-        /// <summary>
-        /// 缓存并返回指定类的所有特性列表
-        /// </summary>
-        /// <param name="method"></param>
-        /// <returns></returns>
-        public static List<Attribute> GetAttributes(MethodInfo method)
-        {
-            var ret = _methodAtts.GetOrAdd(method, methodInner =>
-            {
-                var result = methodInner.GetCustomAttributes(false);
-                return result.Select(item => (Attribute)item).ToList();
-            });
-            return ret;
-        }
-
-        /// <summary>
-        /// 获取类型的指定特性列表
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="method"></param>
-        /// <returns></returns>
-        public static List<T> GetCustomAttributes<T>(MethodInfo method) where T : Attribute
-        {
-            var result = GetAttributes(method);
-
-            var ret = new List<T>();
-            foreach (var attribute in result)
-            {
-                if (attribute is T att)
-                    ret.Add(att);
-            }
-
-            return ret;
-        }
-
+        
+ 
         /// <summary>
         /// 返回指定方法的Request请求映射特性对象
         /// </summary>
@@ -102,10 +67,10 @@ namespace Beinet.Feign
             var ret = _methodRequestAtts.GetOrAdd(method, GetMappingAttribute);
             return ret;
         }
-
-        internal static RequestMappingAttribute GetMappingAttribute(MethodInfo method)
+        
+        static RequestMappingAttribute GetMappingAttribute(MethodInfo method)
         {
-            var methodAtts = GetAttributes(method);
+            var methodAtts = method.GetCustomAttributes(false); 
             foreach (var attribute in methodAtts)
             {
                 if (attribute is RequestMappingAttribute ret)
@@ -145,6 +110,33 @@ namespace Beinet.Feign
                 return Activator.CreateInstance(t);
 
             return null;
+        }
+
+
+
+        /// <summary>
+        /// 获取指定方法的参数列表和特性
+        /// </summary>
+        /// <param name="method"></param>
+        /// <returns></returns>
+        public static Dictionary<ParameterInfo, RequestArgAttribute> GetArgs(MethodInfo method)
+        {
+            var ret = _methodArgs.GetOrAdd(method, methodInner =>
+            {
+                var paras = method.GetParameters();
+                if (paras.Length == 0)
+                    return null;
+
+                var result = new Dictionary<ParameterInfo, RequestArgAttribute>();
+                foreach (var para in paras)
+                {
+                    var atts = para.GetCustomAttributes(typeof(RequestArgAttribute), false);
+                    result.Add(para, (atts.Length > 0) ? (RequestArgAttribute) atts[0] : null);
+                }
+
+                return result;
+            });
+            return ret;
         }
     }
 }
