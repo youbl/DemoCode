@@ -106,7 +106,7 @@ namespace Beinet.Feign
         /// <returns></returns>
         public static object GetDefaultValue(Type t)
         {
-            if (t.IsValueType)
+            if (t != typeof(void) && t.IsValueType)
                 return Activator.CreateInstance(t);
 
             return null;

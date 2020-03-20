@@ -1,4 +1,5 @@
-﻿using Beinet.Feign;
+﻿
+using Beinet.Feign;
 
 namespace Beinet.FeignDemoConsole
 {
@@ -9,7 +10,7 @@ namespace Beinet.FeignDemoConsole
         [GetMapping("test/api.aspx?flg=1")]
         void Get();
 
-        // http无参接口返回数值
+        // http无参接口，返回数值
         [GetMapping("test/api.aspx?flg=1")]
         int GetMs();
 
@@ -36,6 +37,10 @@ namespace Beinet.FeignDemoConsole
         // POST参数为对象，并自定义url参数名为urlPara，返回dto对象
         [PostMapping("test/api.aspx")]
         FeignDtoDemo PostDtoObj(FeignDtoDemo dto, [RequestParam("urlPara")]string arg2);
+
+        // 返回类型为object，等效于返回string
+        [GetMapping("test/api.aspx")]
+        object GetObj();
     }
 
 

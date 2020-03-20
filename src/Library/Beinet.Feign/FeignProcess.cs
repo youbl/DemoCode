@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -110,16 +107,48 @@ namespace Beinet.Feign
             else
                 method = method.ToUpper();
 
-            // 查找POST参数数据
-            var bodyArg = args?.FirstOrDefault(item => item.Value.Type == ArgType.Body).Value?.Value;
+            Uri paraUri = null;
+            object bodyArg = null;
+            if (args != null)
+            {
+                foreach (var argumentItem in args.Values)
+                {
+                    if (argumentItem.Value == null)
+                        continue;
+
+                    if (argumentItem.Type == ArgType.None)
+                    {
+                        if (argumentItem.Value is Uri uri)
+                        {
+                            // 查找Uri类型参数数据，如果有，用于替换FeignClient的Url
+                            paraUri = uri;
+                        }
+                        else if (argumentItem.Value is Type type)
+                        {
+                            if (!returnType.IsAssignableFrom(type))
+                                throw new Exception($"指定的参数类型{type}，必须是返回类型{returnType}的子类");
+
+                            // 查找Type类型参数数据，如果有，用于替换returnType
+                            returnType = type;
+                        }
+                    }
+                    else if (argumentItem.Type == ArgType.Body)
+                    {
+                        // 查找POST参数数据
+                        bodyArg = argumentItem.Value;
+                    }
+                }
+            }
+
             if (bodyArg != null && method == GET)
             {
                 // 有body数据时，强制修改为POST，Java也是这么做的
                 method = "POST";
             }
-            
+
             // 拼接url和路由
-            var url = CombineUrl(Url, methodAtt.Route);
+            var url = paraUri == null ? Url : paraUri.ToString();
+            url = CombineUrl(url, methodAtt.Route);
             // 用配置和参数替换url里的内容
             url = ParseUrl(url, args);
 
@@ -133,10 +162,15 @@ namespace Beinet.Feign
                     postStr = Config.Encoding(bodyArg);
 
                 var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors);
-                if (returnType == typeof(void))
-                    return null;
 
                 var ret = Config.Decoding(httpReturn, returnType);
+                if (ret == null)
+                {
+                    if(returnType.IsValueType)
+                        return TypeHelper.GetDefaultValue(returnType);
+                    return null;
+                }
+
                 realType = ret.GetType();
                 if (returnType.IsInstanceOfType(ret))
                     return ret;

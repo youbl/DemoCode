@@ -10,12 +10,15 @@ namespace Beinet.FeignDemoConsole
         static void Main()
         {
             WriteMsg("程序启动");
+
             TestAloneProcess();
 
             TestQuick();
             TestPlace();
             TestHeader();
             TestConfig();
+            TestURI();
+            TestArgType();
 
             Console.Read();
         }
@@ -47,6 +50,10 @@ namespace Beinet.FeignDemoConsole
 
             FeignDtoDemo dto3 = feign.PostDtoObj(dto2, "xxx");
             WriteMsg(JsonConvert.SerializeObject(dto3));
+
+            object obj = feign.GetObj();
+            WriteMsg($"返回类型：{dto3.GetType()}");
+            WriteMsg(JsonConvert.SerializeObject(obj));
         }
 
         // 配置占位符读取
@@ -92,6 +99,51 @@ namespace Beinet.FeignDemoConsole
             catch { }
         }
 
+        // 参数中存在URI类型，且不为空时，会忽略FeignClient的Url配置
+        static void TestURI()
+        {
+            FeignTestURI feign = ProxyLoader.GetProxy<FeignTestURI>();
+            Uri uri = new Uri("https://47.107.125.247/");
+
+            // 请求为 GET https://47.107.125.247/test/api.aspx 
+            FeignDtoDemo dto1 = feign.GetDtoObj(uri);
+            WriteMsg(JsonConvert.SerializeObject(dto1));
+
+            // 请求为 POST https://47.107.125.247/test/api.aspx Stream为abc
+            FeignDtoDemo dto2 = feign.GetDtoObj("abc", uri);
+            WriteMsg(JsonConvert.SerializeObject(dto2));
+
+            // uri参数传空，使用类定义的url，即 GET https://47.107.125.247/test/api.aspx
+            FeignDtoDemo dto3 = feign.GetDtoObj(null);
+            WriteMsg(JsonConvert.SerializeObject(dto3));
+        }
+
+        static void TestArgType()
+        {
+            FeignTestArgType feign = ProxyLoader.GetProxy<FeignTestArgType>();
+            Type type = typeof(FeignDtoDemo);
+
+            object dto1 = feign.GetDtoObj(type);
+            WriteMsg($"返回类型：{dto1.GetType()}");
+            WriteMsg(JsonConvert.SerializeObject(dto1));
+
+            object dto2 = feign.GetDtoObj("123", type);
+            WriteMsg($"返回类型：{dto2.GetType()}");
+            WriteMsg(JsonConvert.SerializeObject(dto2));
+
+            object dto3 = feign.GetDtoObj(null);
+            WriteMsg($"返回类型：{dto3.GetType()}");
+            WriteMsg(JsonConvert.SerializeObject(dto3));
+
+            try
+            {
+                feign.GetErr(typeof(object));
+            }
+            catch (Exception exp)
+            {
+                WriteMsg(exp);
+            }
+        }
 
         static void TestAloneProcess()
         {

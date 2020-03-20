@@ -76,6 +76,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="a.aspx" />
+    <Content Include="api.aspx" />
     <Content Include="dll\Mono.Security.dll" />
     <Content Include="dll\MySql.Data.dll" />
     <Content Include="dll\Npgsql.dll" />

@@ -1,5 +1,5 @@
-﻿using Beinet.Feign;
-using Beinet.FeignDemoConsole;
+﻿
+using Beinet.Feign;
 
 namespace Beinet.FeignDemoConsole
 {

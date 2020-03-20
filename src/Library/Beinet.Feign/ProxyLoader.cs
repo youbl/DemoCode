@@ -97,7 +97,7 @@ namespace Beinet.Feign
             {
             }
 
-            
+
             static Dictionary<string, ArgumentItem> GetArguments(MethodInfo method, object[] values)
             {
                 var methodArgs = TypeHelper.GetArgs(method);
@@ -115,11 +115,22 @@ namespace Beinet.Feign
                     var item = new ArgumentItem();
                     ret.Add(para.Name, item);
 
+                    if (idx < valuesLen)
+                    {
+                        // ReSharper disable once PossibleNullReferenceException 这里不可能为null的，因为上面判断了
+                        item.Value = values[idx];
+                    }
+
                     item.Name = para.Name;
                     if (att == null)
                     {
                         item.HttpName = item.Name;
-                        item.Type = ArgType.Body;
+
+                        // Uri和Type类型参数，默认不作为BODY
+                        if (item.Value is Uri || item.Value is Type)
+                            item.Type = ArgType.None;
+                        else
+                            item.Type = ArgType.Body;
                     }
                     else
                     {
@@ -133,12 +144,6 @@ namespace Beinet.Feign
                         if (bodyArgNum > 1)
                             throw new Exception(
                                 $"Body参数只允许一个，当前: {ret.Values.Aggregate("", (s, argumentItem) => s + argumentItem.Name + ",")}");
-                    }
-
-                    if (idx < valuesLen)
-                    {
-                        // ReSharper disable once PossibleNullReferenceException 这里不可能为null的，因为上面判断了
-                        item.Value = values[idx];
                     }
 
                     idx++;

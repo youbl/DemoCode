@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FeignTestConfig.cs" />
+    <Compile Include="FeignTestArgType.cs" />
+    <Compile Include="FeignTestURI.cs" />
     <Compile Include="FeignTestPlace.cs" />
     <Compile Include="FeignTestHeader.cs" />
     <Compile Include="FeignTestQuick.cs" />

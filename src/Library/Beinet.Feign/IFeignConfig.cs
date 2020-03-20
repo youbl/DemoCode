@@ -10,6 +10,7 @@ namespace Beinet.Feign
     /// </summary>
     public interface IFeignConfig
     {
+        
         /// <summary>
         /// 请求拦截接口清单
         /// </summary>
@@ -57,6 +58,11 @@ namespace Beinet.Feign
 
         public virtual object Decoding(string str, Type returnType)
         {
+            if (returnType == typeof(void))
+                return null;
+            else if (returnType == typeof(object))
+                return str;
+
             if (string.IsNullOrEmpty(str))
                 return TypeHelper.GetDefaultValue(returnType);
 
@@ -83,5 +89,6 @@ namespace Beinet.Feign
 
             return exp;
         }
+        
     }
 }
