@@ -6,6 +6,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Web;
+using NLog;
 
 namespace Beinet.Feign
 {
@@ -15,6 +16,8 @@ namespace Beinet.Feign
     public class FeignProcess
     {
         private const string GET = "GET";
+        private static ILogger _logger = LogManager.GetCurrentClassLogger();
+
         static FeignProcess()
         {
             foreach (string setting in ConfigurationManager.AppSettings)
@@ -30,6 +33,9 @@ namespace Beinet.Feign
             ServicePointManager.ServerCertificateValidationCallback = CheckValidationResult;
         }
 
+        #region 成员属性
+
+        
         private string _url;
 
         /// <summary>
@@ -57,7 +63,14 @@ namespace Beinet.Feign
             {
                 _config = value;
                 Interceptors = Config.GetInterceptor();
+                Level = Config.LoggerLevel();
+
+                var tmp = Url;
+
                 ParseUrl();
+
+                if (tmp != Url)
+                    Log(() => tmp + "=>" + Url);
             }
         }
 
@@ -65,6 +78,13 @@ namespace Beinet.Feign
         /// 请求拦截器
         /// </summary>
         internal List<IRequestInterceptor> Interceptors { get; private set; }
+
+        private LogLevel Level { get; set; } = LogLevel.Debug;
+
+        static Dictionary<string, object> _configs = new Dictionary<string, object>();
+
+        #endregion
+
 
         private void ParseUrl()
         {
@@ -77,7 +97,6 @@ namespace Beinet.Feign
             }
         }
 
-        static Dictionary<string, object> _configs = new Dictionary<string, object>();
 
         /// <summary>
         /// 泛型版本HTTP调用
@@ -161,7 +180,7 @@ namespace Beinet.Feign
                 if (bodyArg != null)
                     postStr = Config.Encoding(bodyArg);
 
-                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors);
+                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors, Level);
 
                 var ret = Config.Decoding(httpReturn, returnType);
                 if (ret == null)
@@ -251,7 +270,10 @@ namespace Beinet.Feign
             return url;
         }
 
-
+        void Log(LogMessageGenerator messageFunc)
+        {
+            _logger.Log(Level, messageFunc);
+        }
 
 
         static string CombineUrl(string url, string route)

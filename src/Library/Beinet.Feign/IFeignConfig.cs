@@ -33,6 +33,12 @@ namespace Beinet.Feign
         object Decoding(string str, Type returnType);
 
         /// <summary>
+        /// 要记录日志的级别，默认为Debug
+        /// </summary>
+        /// <returns>日志级别</returns>
+        NLog.LogLevel LoggerLevel();
+
+        /// <summary>
         /// 出异常时的异常处理方法
         /// </summary>
         /// <param name="exp"></param>
@@ -70,6 +76,11 @@ namespace Beinet.Feign
                 return str;
 
             return JsonConvert.DeserializeObject(str, returnType);
+        }
+
+        public virtual NLog.LogLevel LoggerLevel()
+        {
+            return NLog.LogLevel.Debug;
         }
 
         public virtual Exception ErrorHandle(Exception exp)

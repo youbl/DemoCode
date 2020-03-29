@@ -36,6 +36,11 @@ namespace Beinet.FeignDemoConsole
         {
             return base.ErrorHandle(exp);
         }
+
+        public override NLog.LogLevel LoggerLevel()
+        {
+            return NLog.LogLevel.Info;
+        }
     }
 
     public class RequestInterceptDemo : IRequestInterceptor

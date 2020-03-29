@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using NLog;
 
 namespace Beinet.Feign
 {
@@ -12,6 +13,8 @@ namespace Beinet.Feign
     /// </summary>
     internal static class WebHelper
     {
+        private static ILogger _logger = LogManager.GetCurrentClassLogger();
+
         public delegate void BeforeRequest(HttpWebRequest request);
 
         public delegate void AfterRequest(HttpWebRequest request, HttpWebResponse response);
@@ -24,10 +27,12 @@ namespace Beinet.Feign
         /// <param name="postStr">要发送的body数据</param>
         /// <param name="headers">要传输的header清单</param>
         /// <param name="interceptors">拦截器清单</param>
+        /// <param name="level">日志级别</param>
         /// <returns></returns>
         public static string GetPage(string url, string method, string postStr,
             Dictionary<string, string> headers,
-            List<IRequestInterceptor> interceptors)
+            List<IRequestInterceptor> interceptors,
+            LogLevel level)
         {
             if (!IsUrl(url))
                 url = "http://" + url;
@@ -93,6 +98,23 @@ namespace Beinet.Feign
                 }
             }
 
+            _logger.Log(level, () =>
+            {
+                var sb = new StringBuilder();
+                sb.AppendFormat("==Request Info:==\n{0} {1}\n", method, url);
+                if (!string.IsNullOrEmpty(postStr))
+                    sb.AppendFormat("Body: {0}\n", postStr);
+                if (request.Headers.Count > 0)
+                {
+                    sb.AppendLine("Headers:");
+                    foreach (string header in request.Headers)
+                    {
+                        sb.AppendFormat("  {0}={1}\n", header, request.Headers[header]);
+                    }
+                }
+                return sb.ToString();
+            });
+
             try
             {
                 using (var response = (HttpWebResponse) request.GetResponse())
@@ -105,7 +127,19 @@ namespace Beinet.Feign
                         }
                     }
 
-                    return GetResponseString(response);
+
+                    var sb = new StringBuilder();
+                    sb.AppendFormat("==Response Headers:==\n");
+                    foreach (string header in response.Headers)
+                    {
+                        sb.AppendFormat("  {0}={1}\n", header, response.Headers[header]);
+                    }
+
+                    var ret = GetResponseString(response);
+                    sb.Append(ret);
+                    _logger.Log(level, sb.ToString);
+
+                    return ret;
                 }
             }
             catch (Exception exp)
