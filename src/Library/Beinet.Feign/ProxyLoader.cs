@@ -18,26 +18,40 @@ namespace Beinet.Feign
         static ProxyFactory _factory = new ProxyFactory();
 
         /// <summary>
+        /// Feign配置类构造方法委托
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public delegate IFeignConfig ConfigResolver(Type type);
+
+        /// <summary>
+        /// 全局统一的Feign配置构造方法
+        /// </summary>
+        public static ConfigResolver Resolver { get; set; }
+
+        /// <summary>
         /// 返回指定接口类型的实例（代理类，不需要实现）
         /// </summary>
-        /// <typeparam name="TInterface"></typeparam>
+        /// <typeparam name="TInterface">返回的代理类型</typeparam>
+        /// <param name="resolver">配置类解析方法</param>
         /// <returns></returns>
-        public static TInterface GetProxy<TInterface>()
+        public static TInterface GetProxy<TInterface>(ConfigResolver resolver = null)
         {
-            return (TInterface)GetProxy(typeof(TInterface));
+            return (TInterface)GetProxy(typeof(TInterface), resolver);
         }
 
         /// <summary>
         /// 返回指定接口类型的实例（代理类，不需要实现）
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="type">返回的代理类型</param>
+        /// <param name="resolver">配置类解析方法</param>
         /// <returns></returns>
-        public static object GetProxy(Type type)
+        public static object GetProxy(Type type, ConfigResolver resolver = null)
         {
             return _feigns.GetOrAdd(type, typeInner =>
             {
                 if (!type.IsInterface)
-                    throw new Exception("必须是非接口类型");
+                    throw new Exception("必须是接口类型");
                 var atts = TypeHelper.GetCustomAttributes<FeignClientAttribute>(type);
                 if (atts.Count <= 0)
                     throw new Exception("未找到FeignClient特性配置");
@@ -48,18 +62,26 @@ namespace Beinet.Feign
                 var wrapper = new ProxyInvokeWrapper();
                 var ret = (FeignProcess) _factory.CreateProxy(typeof(FeignProcess), wrapper, type);
 
-                if (feignAtt.Configuration == null)
-                    ret.Config = new FeignDefaultConfig();
-                else
-                    ret.Config = (IFeignConfig) Activator.CreateInstance(feignAtt.Configuration);
+                resolver = resolver ?? Resolver ?? ResolveConfig;
+                ret.Config = resolver(feignAtt.Configuration);
 
                 ret.Url = feignAtt.Url;
                 return ret;
             });
         }
 
+        static IFeignConfig ResolveConfig(Type configType)
+        {
+            if (configType == null)
+                return new FeignDefaultConfig();
 
+            if (!typeof(IFeignConfig).IsAssignableFrom(configType))
+                throw new Exception("配置类必须实现IFeignConfig.");
 
+            return (IFeignConfig)Activator.CreateInstance(configType);
+        }
+
+        
         /// <summary>
         /// 拦截类
         /// </summary>
