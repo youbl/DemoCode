@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Beinet.Core.Reflection
 {
@@ -11,29 +13,27 @@ namespace Beinet.Core.Reflection
     public static class TypeHelper
     {
         #region 静态字段，用于缓存收集到的数据
-        
+
         /// <summary>
         /// 当前执行的程序集
         /// </summary>
         private static Assembly nowAssembly = Assembly.GetExecutingAssembly();
+
+        private static Dictionary<string, Assembly> _arrAssemblys;
+        /// <summary>
+        /// 当前项目的所有程序集
+        /// </summary>
+        public static Dictionary<string, Assembly> Assemblys => ScanAssembly();
 
         /// <summary>
         /// 缓存收集到的反射类型，避免重复反射
         /// </summary>
         private static readonly Dictionary<string, Type> _arrTypes = new Dictionary<string, Type>();
         /// <summary>
-        /// 缓存收集到的反射方法
-        /// </summary>
-        private static readonly Dictionary<string, object[]> _arrMethods = new Dictionary<string, object[]>();
-        /// <summary>
-        /// 缓存收集到的反射属性或字段，避免重复反射
-        /// </summary>
-        private static readonly Dictionary<string, object> _arrAtts = new Dictionary<string, object>();
-        /// <summary>
         /// 缓存收集到的命名空间,避免重复反射
         /// </summary>
         private static readonly Dictionary<string, List<Type>> _arrNameSpace = new Dictionary<string, List<Type>>();
-     
+
         #endregion
 
         #region 类型相关
@@ -75,7 +75,7 @@ namespace Beinet.Core.Reflection
             if (arrInfo.Length == 1)
             {
                 //尝试从运行中的程序集获取
-                result = nowAssembly.GetType(info.Trim());
+                result = nowAssembly.GetType(arrInfo[0]);
                 if (result != null)
                 {
                     return result;
@@ -134,7 +134,7 @@ namespace Beinet.Core.Reflection
 
         /// <summary>
         /// 判断subType是否从parentType继承。
-        /// parentType可以是未指定泛型接口类型，如 Foo&lt;&gt;
+        /// parentType可以是未指定泛型的接口类型，如 Foo&lt;&gt;
         /// </summary>
         /// <param name="subType"></param>
         /// <param name="parentType"></param>
@@ -188,310 +188,123 @@ namespace Beinet.Core.Reflection
             }
             return false;
         }
+
+        /// <summary>
+        /// 从程序集里，安全的返回类型清单
+        /// </summary>
+        /// <param name="assembly">The <see cref="System.Reflection.Assembly"/> from which to load types.</param>
+        /// <returns>
+        /// The set of types from the <paramref name="assembly" />, or the subset
+        /// of types that could be loaded if there was any error.
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// Thrown if <paramref name="assembly" /> is <see langword="null" />.
+        /// </exception>
+        public static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        {
+            // Algorithm from StackOverflow answer here:
+            // https://stackoverflow.com/questions/7889228/how-to-prevent-reflectiontypeloadexception-when-calling-assembly-gettypes
+            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+
+            try
+            {
+                return assembly.DefinedTypes.Select(t => t.AsType());
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                return ex.Types.Where(t => t != null);
+            }
+        }
         #endregion
 
+        
+        #region 程序集相关
 
-
-        #region 属性字段相关
         /// <summary>
-        /// 获取类的静态属性或字段值
+        /// 加载全部程序集
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="attName"></param>
         /// <returns></returns>
-        public static object GetAtt(string type, string attName)
+        static Dictionary<string, Assembly> ScanAssembly()
         {
-            var objtype = GetType(type);
-            if (objtype == null)
-            {
-                return null;
-            }
-            return GetAtt(objtype, attName);
+            if (_arrAssemblys != null)
+                return _arrAssemblys;
+
+            var dir = Env.Dir;
+            if (Env.IsWebApp)
+                dir = Path.Combine(Env.Dir, "bin");
+            _arrAssemblys = ScanAssembly(dir);
+            return _arrAssemblys;
         }
 
-        /// <summary>
-        /// 获取类的静态属性或字段值
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="attName"></param>
-        /// <returns></returns>
-        public static object GetAtt(Type type, string attName)
+        static Dictionary<string, Assembly> ScanAssembly(string dir, string regex = null)
         {
-            var key = type.FullName + "-" + attName;
-            object attInfo;
-            lock(_arrAtts)
-                if (!_arrAtts.TryGetValue(key, out attInfo))
+            var arrAssembly = new Dictionary<string, Assembly>();
+
+            // 加入当前入口程序集
+            var nowAss = Assembly.GetEntryAssembly();
+            if (nowAss != null)
+            {
+                arrAssembly.Add(nowAss.GetName().Name, nowAss);
+            }
+
+            if (!Directory.Exists(dir))
+            {
+                return arrAssembly;
+            }
+
+            Regex regObj = null;
+            if (!string.IsNullOrEmpty(regex))
+                regObj = new Regex(regex);
+            foreach (var file in Directory.GetFiles(dir, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                var assemblyString = Path.GetFileNameWithoutExtension(file);
+                if (string.IsNullOrEmpty(assemblyString) || (regObj != null && !regObj.IsMatch(assemblyString)))
+                    continue;
+                try
                 {
-                    attInfo = GetRealAtt(type, attName);
-                    _arrAtts[key] = attInfo;
+                    var ass = Assembly.Load(assemblyString);
+                    if (ass == null)
+                    {
+                        continue;
+                    }
+
+                    arrAssembly.Add(assemblyString, ass);
                 }
-            if (attInfo == null)
-            {
-                return null;
-            }
-            var prop = attInfo as PropertyInfo;
-            if (prop != null)
-            {
-                return prop.GetValue(null);
-            }
-            var field = attInfo as FieldInfo;
-            if (field != null)
-            {
-                return field.GetValue(null);
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 获取实例的属性或字段值
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="attName"></param>
-        /// <returns></returns>
-        public static object GetAtt(object obj, string attName)
-        {
-            var type = obj.GetType();
-            var key = type + "-" + attName;
-            object attInfo;
-            lock (_arrAtts)
-                if (!_arrAtts.TryGetValue(key, out attInfo))
+                catch
                 {
-                    attInfo = GetRealAtt(type, attName);
-                    _arrAtts[key] = attInfo;
-                }
-
-            if (attInfo == null)
-            {
-                return null;
-            }
-            var prop = attInfo as PropertyInfo;
-            if (prop != null)
-            {
-                return prop.GetValue(obj);
-            }
-            var field = attInfo as FieldInfo;
-            if (field != null)
-            {
-                return field.GetValue(obj);
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 获取类的静态属性或字段, 返回 PropertyInfo 或 FieldInfo
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="attName"></param>
-        /// <returns></returns>
-        private static object GetRealAtt(Type type, string attName)
-        {
-            BindingFlags flags = BindingFlags.Static | BindingFlags.Instance | 
-                BindingFlags.Public | BindingFlags.NonPublic;
-            object att = type.GetProperty(attName, flags | BindingFlags.GetProperty);
-            if (att == null)
-            {
-                att = type.GetField(attName, flags | BindingFlags.GetField);
-            }
-            return att;
-        }
-
-
-        #endregion
-
-
-
-        #region 方法相关
-
-
-        /// <summary>
-        /// 返回数组3个项：MethodInfo、Args Type[]、ParameterInfo[]
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object[] GetMethod(string type, string methodName, params object[] args)
-        {
-            var objtype = GetType(type);
-            if (objtype == null)
-            {
-                return null;
-            }
-            return GetMethod(objtype, methodName, args);
-        }
-
-
-        /// <summary>
-        /// 返回数组3个项：MethodInfo、Args Type[]、ParameterInfo[]
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object[] GetMethod(Type type, string methodName, params object[] args)
-        {
-            var key = type + "-" + methodName + "-" + (args?.Length.ToString());
-            object[] methodAndType;
-            lock (_arrMethods)
-                if (!_arrMethods.TryGetValue(key, out methodAndType))
-                {
-                    methodAndType = GetRealMethod(type, methodName, args);
-                    _arrMethods[key] = methodAndType;
-                }
-            return methodAndType;
-        }
-
-
-        /// <summary>
-        /// 返回数组3个项：MethodInfo、Args Type[]、ParameterInfo[]
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        private static object[] GetRealMethod(Type type, string methodName, params object[] args)
-        {
-            Type[] types;
-            if (args == null)
-            {
-                types = new Type[0];
-            }
-            else
-            {
-                // 定义参数类型，避免重载方法调用导致：发现不明确的匹配
-                types = new Type[args.Length];
-                int i = 0;
-                foreach (object arg in args)
-                {
-                    types[i] = arg.GetType();
-                    i++;
+                    // ignored
                 }
             }
 
-            BindingFlags flags = BindingFlags.InvokeMethod | BindingFlags.Static | BindingFlags.Instance | 
-                BindingFlags.Public | BindingFlags.NonPublic;
-            var methodTmp = type.GetMethod(methodName, flags, null, types, null);
-            ParameterInfo[] arrPara = null;
-            if (methodTmp != null)
-            {
-                arrPara = methodTmp.GetParameters();
-            }
-            return new object[] { methodTmp, types, arrPara };
+            return arrAssembly;
         }
-
-
-        /// <summary>
-        /// 执行静态方法
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object ExecuteStaticMethod(string type, string methodName, params object[] args)
-        {
-            var objtype = GetType(type);
-            if (objtype == null)
-            {
-                return null;
-            }
-            return ExecuteStaticMethod(objtype, methodName, args);
-        }
-
-        /// <summary>
-        /// 执行静态方法
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object ExecuteStaticMethod(Type type, string methodName, params object[] args)
-        {
-            var methodInfo = GetMethod(type, methodName, args);
-            if (methodInfo == null)
-            {
-                return null;
-            }
-            var method = methodInfo[0] as MethodInfo;
-            if (method == null)
-            {
-                return null;
-            }
-            // 如果没有传递参数,要根据方法的参数个数，传递null
-            if (args == null)
-            {
-                ParameterInfo[] arrPara = methodInfo[2] as ParameterInfo[];
-                if (arrPara != null && arrPara.Length > 0)
-                {
-                    args = new object[arrPara.Length];
-                }
-            }
-            return method.Invoke(null, args);
-        }
-
-        /// <summary>
-        /// 执行实例方法
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <param name="methodName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        public static object ExecuteMethod(object obj, string methodName, params object[] args)
-        {
-            var methodInfo = GetMethod(obj.GetType(), methodName, args);
-            if (methodInfo == null)
-            {
-                return null;
-            }
-            var method = methodInfo[0] as MethodInfo;
-            if (method == null)
-            {
-                return null;
-            }
-            // 如果没有传递参数,要根据方法的参数个数，传递null
-            if (args == null)
-            {
-                ParameterInfo[] arrPara = methodInfo[2] as ParameterInfo[];
-                if (arrPara != null && arrPara.Length > 0)
-                {
-                    args = new object[arrPara.Length];
-                }
-            }
-            return method.Invoke(obj, args);
-        }
-
-        #endregion
 
 
         /// <summary>
         /// 根据名称查找组件
         /// </summary>
-        /// <param name="name">举例：Beinet.Core</param>
+        /// <param name="name">举例：Beinet.Tool.Core</param>
         /// <returns></returns>
         public static Assembly GetAssembly(string name)
         {
-            if (string.IsNullOrEmpty(name))
+            Assembly ret = null;
+            if (!string.IsNullOrEmpty(name))
             {
-                return null;
-            }
-            var strName = name;
-            while (strName.Length > 0)
-            {
-                try
+                var strName = name;
+                while (ret == null && strName.Length > 0)
                 {
-                    return Assembly.Load(strName);
-                }
-                catch
-                {
-                    var idx = strName.LastIndexOf('.');
-                    if (idx <= 0)
+                    if (!Assemblys.TryGetValue(strName, out ret))
                     {
-                        return null;
+                        var idx = strName.LastIndexOf('.');
+                        strName = idx > 0 ? strName.Substring(0, idx) : "";
                     }
-                    strName = strName.Substring(0, idx);
                 }
             }
-            return null;
+
+            return ret;
         }
+
+        #endregion
 
 
         /// <summary>
@@ -507,7 +320,7 @@ namespace Beinet.Core.Reflection
                 return null;
             }
             List<Type> temp;
-            lock(_arrNameSpace)
+            lock (_arrNameSpace)
                 if (!_arrNameSpace.TryGetValue(namespaceName, out temp))
                 {
                     temp = GetRealNameSpace(namespaceName);
@@ -519,25 +332,34 @@ namespace Beinet.Core.Reflection
         private static List<Type> GetRealNameSpace(string info)
         {
             var strs = info.Split(',').Select(x => x.Trim()).ToArray();
-            string assName;
+            string assName = null;
             if (strs.Length == 1)
             {
                 //尝试从运行中的程序集获取
-                return nowAssembly.GetTypes().Where(x=>x.Namespace == info.Trim()).ToList();
+                var ret = GetLoadableTypes(nowAssembly).Where(x => x.Namespace == strs[0]).ToList();
+                if (ret.Count > 0)
+                    return ret;
+
+                assName = strs[0];
             }
-            else if (strs.Length == 2)
+
+            if (strs.Length == 2)
             {
                 assName = strs[1];
-                var objAssName = new AssemblyName(assName);
+            }
+
+            if (!string.IsNullOrEmpty(assName))
+            {
                 var ass = GetAssembly(assName);
                 if (ass == null)
-                {
-                    return null;
-                }
-                return ass.GetTypes().Where(x => x.Namespace == strs[0]).ToList();
+                    throw new Exception("指定的程序集未载到：" + assName);
+                return GetLoadableTypes(ass).Where(x => x.Namespace == strs[0]).ToList();
             }
             return null;
         }
+
+
+
 
 
         #region 从exe嵌入资源里加载dll的方法, Web项目不要使用

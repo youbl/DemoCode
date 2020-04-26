@@ -69,7 +69,7 @@ namespace DemoCodeConsole
             var thid = Thread.CurrentThread.ManagedThreadId.ToString();
             string msg = $@"{type}
 启动目录:{AppDomain.CurrentDomain.BaseDirectory}
-启动文件:{process.MainModule.FileName}
+启动文件:{process.MainModule?.FileName}
 {ass}
 .Net:{ass.ImageRuntimeVersion}
 当前进程/线程ID:{procid}/{thid}

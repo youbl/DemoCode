@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.FeignDemoConsole", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.Repository", "Library\Beinet.Repository\Beinet.Repository.csproj", "{28A1B41F-433E-47F1-9282-D09EFEE21328}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.CronDemoConsole", "Test\Beinet.CronDemoConsole\Beinet.CronDemoConsole.csproj", "{8522A38D-F561-4C73-AC9B-699B0BF518C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{28A1B41F-433E-47F1-9282-D09EFEE21328}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{28A1B41F-433E-47F1-9282-D09EFEE21328}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{28A1B41F-433E-47F1-9282-D09EFEE21328}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8522A38D-F561-4C73-AC9B-699B0BF518C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8522A38D-F561-4C73-AC9B-699B0BF518C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8522A38D-F561-4C73-AC9B-699B0BF518C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8522A38D-F561-4C73-AC9B-699B0BF518C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -92,6 +98,7 @@ Global
 		{774BB13E-6B57-4E2A-8DA2-43F1D4E16C7D} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
 		{091D2C88-6A42-45E9-9B39-F0BD2CE329D8} = {E8592A62-126C-44BB-8F51-A59486CE376D}
 		{28A1B41F-433E-47F1-9282-D09EFEE21328} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
+		{8522A38D-F561-4C73-AC9B-699B0BF518C4} = {E8592A62-126C-44BB-8F51-A59486CE376D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {199BBEEA-CF0A-41D7-B203-5A319CBD9F0F}
