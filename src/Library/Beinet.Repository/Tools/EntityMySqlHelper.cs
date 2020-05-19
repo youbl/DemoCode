@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using Beinet.Repository.Entitys;
@@ -7,27 +10,37 @@ namespace Beinet.Repository.Tools
 {
     class EntityMySqlHelper
     {
+        private static ConcurrentDictionary<Type, EntityData> _arrCache = new ConcurrentDictionary<Type, EntityData>();
         /// <summary>
         /// 解析实体类，暂时没有考虑数据库方言
         /// </summary>
-        /// <param name="type"></param>
+        /// <param name="entityType"></param>
+        /// <param name="keyType"></param>
         /// <returns></returns>
-        public EntityData ParseEntity(Type type)
+        public EntityData ParseEntity(Type entityType, Type keyType)
         {
-            if (type == null)
+            if (entityType == null)
                 throw new ArgumentException("实体类型不能为空");
 
-            if (type.GetCustomAttribute<EntityAttribute>() == null)
-                throw new ArgumentException("实体类型必须添加Entity注解:Not a managed type: class " + type.FullName);
-
-            var ret = new EntityData
+            return _arrCache.GetOrAdd(entityType, typeInner =>
             {
-                TableName = GetTableName(type),
-            };
-            ParseColumns(type, ret);
-            return ret;
+                if (typeInner.GetCustomAttribute<EntityAttribute>() == null)
+                    throw new ArgumentException("实体类型必须添加Entity注解:Not a managed type: class " + typeInner.FullName);
+
+                var ret = new EntityData
+                {
+                    TableName = GetTableName(typeInner),
+                };
+                ParseColumns(typeInner, keyType, ret);
+                return ret;
+            });
         }
 
+        /// <summary>
+        /// 解析并返回表名
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         string GetTableName(Type type)
         {
             string tableName;
@@ -49,11 +62,17 @@ namespace Beinet.Repository.Tools
             return tableName;
         }
 
-        void ParseColumns(Type type, EntityData ret)
+        /// <summary>
+        /// 解析并收集字段列表
+        /// </summary>
+        /// <param name="entityType"></param>
+        /// <param name="keyType"></param>
+        /// <param name="ret"></param>
+        void ParseColumns(Type entityType, Type keyType, EntityData ret)
         {
-            var properties = type.GetProperties();
+            var properties = entityType.GetProperties();
             if (properties.Length <= 0)
-                throw new ArgumentException("指定的实体类型，没有找到公共属性：" + type.FullName);
+                throw new ArgumentException("指定的实体类型，没有找到公共属性：" + entityType.FullName);
 
             var sbSelect = new StringBuilder();
             var sbInsertKey = new StringBuilder();
@@ -74,6 +93,8 @@ namespace Beinet.Repository.Tools
                 var idAtt = property.GetCustomAttribute<IdAttribute>();
                 if (idAtt != null)
                 {
+                    if (property.PropertyType != keyType)
+                        throw new ArgumentException("指定的主键与泛型类型不匹配：" + entityType.FullName);
                     ret.KeyName = colName; // 注意带上了表名
                 }
 
@@ -95,6 +116,7 @@ namespace Beinet.Repository.Tools
                 {
                     Name = colName,
                     Att = colAtt,
+                    Property = property,
                 };
                 ret.Fields.Add(propName, field);
             }
@@ -118,6 +140,45 @@ namespace Beinet.Repository.Tools
                 Insert(0, " SET ")
                 .Insert(0, ret.TableName)
                 .Insert(0, "UPDATE ");
+        }
+
+        /// <summary>
+        /// 解析实体接口类型和基础类型的方法，并返回映射关系
+        /// </summary>
+        /// <param name="entityRepostoryType"></param>
+        /// <param name="baseType"></param>
+        /// <returns></returns>
+        public Dictionary<MethodInfo, MethodInfo> ParseRepostory(Type entityRepostoryType, Type baseType)
+        {
+            var arrEntityMethods = entityRepostoryType.GetMethods();
+            var arrBaseMethods = baseType.GetMethods();
+
+            var ret = new Dictionary<MethodInfo, MethodInfo>();
+            foreach (var method in arrEntityMethods)
+            {
+                if (method.IsGenericMethod)
+                    throw new ArgumentException("暂不支持泛型方法：" + entityRepostoryType.FullName);
+
+                var baseMethod = arrBaseMethods.FirstOrDefault(baseItem =>
+                {
+                    if (baseItem.Name != method.Name)
+                        return false;
+                    var baseParams = baseItem.GetParameters();
+                    var entityPams = method.GetParameters();
+                    if (baseParams.Length != entityPams.Length)
+                        return false;
+                    for(var i = 0; i < baseParams.Length; i++)
+                    {
+                        if (baseParams[i].ParameterType != entityPams[i].ParameterType)
+                            return false;
+                    }
+
+                    return true;
+                });
+                ret.Add(method, baseMethod); // 可能找不到，value就存null
+            }
+
+            return ret;
         }
     }
 }

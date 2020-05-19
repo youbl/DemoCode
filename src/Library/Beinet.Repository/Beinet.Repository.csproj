@@ -59,7 +59,7 @@
     <Compile Include="Entitys\EntityAttribute.cs" />
     <Compile Include="Repositories\JpaRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Tools\EntityHelper.cs" />
+    <Compile Include="Tools\EntityMySqlHelper.cs" />
     <Compile Include="Tools\TypeHelper.cs" />
   </ItemGroup>
   <ItemGroup>

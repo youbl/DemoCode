@@ -1,6 +1,7 @@
 ﻿
 
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace Beinet.Repository.Entitys
 {
@@ -44,6 +45,10 @@ namespace Beinet.Repository.Entitys
             /// 字段配置
             /// </summary>
             public ColumnAttribute Att { get; set; }
+            /// <summary>
+            /// 对应的类属性
+            /// </summary>
+            public PropertyInfo Property { get; set; }
         }
     }
 }
