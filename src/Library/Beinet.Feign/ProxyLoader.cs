@@ -51,12 +51,12 @@ namespace Beinet.Feign
             return _feigns.GetOrAdd(type, typeInner =>
             {
                 if (!type.IsInterface)
-                    throw new Exception("必须是接口类型");
+                    throw new ArgumentException("必须是接口类型");
                 var atts = TypeHelper.GetCustomAttributes<FeignClientAttribute>(type);
                 if (atts.Count <= 0)
-                    throw new Exception("未找到FeignClient特性配置");
+                    throw new ArgumentException("未找到FeignClient特性配置");
                 if (atts[0].Url == null || (atts[0].Url = atts[0].Url.Trim()).Length == 0)
-                    throw new Exception("FeignClient特性配置Url不能为空");
+                    throw new ArgumentException("FeignClient特性配置Url不能为空");
                 var feignAtt = atts[0];
 
                 var wrapper = new ProxyInvokeWrapper();
@@ -76,7 +76,7 @@ namespace Beinet.Feign
                 return new FeignDefaultConfig();
 
             if (!typeof(IFeignConfig).IsAssignableFrom(configType))
-                throw new Exception("配置类必须实现IFeignConfig.");
+                throw new ArgumentException("配置类必须实现IFeignConfig.");
 
             return (IFeignConfig)Activator.CreateInstance(configType);
         }

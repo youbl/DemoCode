@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace Beinet.Repository
+namespace Beinet.Repository.Repositories
 {
     /// <summary>
     /// JPA操作接口
@@ -16,7 +13,7 @@ namespace Beinet.Repository
         /// 返回所有记录
         /// </summary>
         /// <returns></returns>
-        List<T> findAll();
+        List<T> FindAll();
 
         // Page<T> findAll(Pageable pageable);
 
@@ -25,65 +22,65 @@ namespace Beinet.Repository
         /// </summary>
         /// <param name="IEnumerable"></param>
         /// <returns></returns>
-        List<T> findAllById(IEnumerable<ID> IEnumerable);
+        List<T> FindAllById(IEnumerable<ID> IEnumerable);
 
         /// <summary>
         /// 返回记录总数
         /// </summary>
         /// <returns></returns>
-        long count();
+        long Count();
 
         /// <summary>
         /// 根据主键删除
         /// </summary>
         /// <param name="aID">主键</param>
-        void deleteById(ID aID);
+        void DeleteById(ID aID);
 
         /// <summary>
         /// 根据实体删除
         /// </summary>
         /// <param name="T">实体</param>
-        void delete(T T);
+        void Delete(T T);
 
         /// <summary>
         /// 根据实体列表删除
         /// </summary>
         /// <param name="arr">实体列表</param>
-        void deleteAll(IEnumerable<T> arr);
+        void DeleteAll(IEnumerable<T> arr);
 
         /// <summary>
         /// 根据主键列表删除
         /// </summary>
         /// <param name="arr">主键列表</param>
-        void deleteAll(IEnumerable<ID> arr);
+        void DeleteAll(IEnumerable<ID> arr);
 
         /// <summary>
         /// 保存实体
         /// </summary>
         /// <param name="s">实体</param>
         /// <returns></returns>
-        T save(T s);
+        T Save(T s);
 
         /// <summary>
         /// 批量保存实体
         /// </summary>
         /// <param name="IEnumerable"></param>
         /// <returns></returns>
-        List<T> saveAll(IEnumerable<T> IEnumerable);
+        List<T> SaveAll(IEnumerable<T> IEnumerable);
 
         /// <summary>
         /// 根据主键查找
         /// </summary>
         /// <param name="aID">主键</param>
         /// <returns></returns>
-        T findById(ID aID);
+        T FindById(ID aID);
 
         /// <summary>
         /// 指定主键是否存在
         /// </summary>
         /// <param name="aID">主键</param>
         /// <returns></returns>
-        bool existsById(ID aID);
+        bool ExistsById(ID aID);
 
         // void flush();
         // T saveAndFlush(T s);
