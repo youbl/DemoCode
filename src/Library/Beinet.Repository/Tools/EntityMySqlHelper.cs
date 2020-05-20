@@ -105,17 +105,17 @@ namespace Beinet.Repository.Tools
                 }
 
                 var generatedAtt = property.GetCustomAttribute<GeneratedValueAttribute>();
-                var isAuto = (generatedAtt == null || generatedAtt.Strategy == GenerationType.AUTO);
+                var isIdentity = (generatedAtt != null && generatedAtt.Strategy == GenerationType.IDENTITY);
 
                 sbSelect.AppendFormat("{0},", colName);
-                if (colAtt.Insertable && isAuto)
+                if (colAtt.Insertable && !isIdentity)
                 {
                     sbInsertKey.AppendFormat("{0},", colName);
                     sbInsertVal.AppendFormat("@{0},", propName);
                 }
 
                 // 主键不能更新
-                if (colAtt.Updatable && isAuto && idAtt == null)
+                if (colAtt.Updatable && !isIdentity && idAtt == null)
                     sbUpdate.AppendFormat("{0}=@{1},", colName, propName);
 
                 var field = new EntityData.FieldAtt
@@ -123,6 +123,7 @@ namespace Beinet.Repository.Tools
                     Name = colName,
                     Att = colAtt,
                     Property = property,
+                    IsIdentity = isIdentity,
                 };
                 ret.Fields.Add(propName, field);
             }
@@ -154,11 +155,13 @@ namespace Beinet.Repository.Tools
         /// <param name="entityRepostoryType"></param>
         /// <param name="runnerType"></param>
         /// <returns></returns>
-        public Dictionary<MethodInfo, MethodInfo> ParseRepostory(Type entityRepostoryType, Type runnerType)
+        public Dictionary<MethodInfo, object> ParseRepostory(Type entityRepostoryType, Type runnerType)
         {
             var baseType = entityRepostoryType.GetInterfaces()
                 .FirstOrDefault(
                     tp => tp.Namespace == typeof(JpaRepository<,>).Namespace && tp.Name == "JpaRepository`2");
+            if (baseType == null)
+                throw new ArgumentException("仓储类未实现JpaRepository：" + entityRepostoryType.FullName);
 
             // 用户仓储接口的所有方法
             var arrEntityMethods = entityRepostoryType.GetMethods().ToList();
@@ -167,13 +170,13 @@ namespace Beinet.Repository.Tools
             // 实现类的所有方法
             var arrBaseMethods = runnerType.GetMethods();
 
-            var ret = new Dictionary<MethodInfo, MethodInfo>();
+            var ret = new Dictionary<MethodInfo, object>();
             foreach (var method in arrEntityMethods)
             {
                 if (method.IsGenericMethod)
                     throw new ArgumentException("暂不支持泛型方法：" + entityRepostoryType.FullName);
 
-                var baseMethod = arrBaseMethods.FirstOrDefault(baseItem =>
+                object baseMethod = arrBaseMethods.FirstOrDefault(baseItem =>
                 {
                     if (baseItem.Name != method.Name)
                         return false;
@@ -189,7 +192,13 @@ namespace Beinet.Repository.Tools
 
                     return true;
                 });
-                ret.Add(method, baseMethod); // 可能找不到，value就存null
+                if (baseMethod == null)
+                {
+                    // 不属于基础方法，说明是用户自定义方法，要根据Query注解或方法名，进行解析处理
+                    baseMethod = ParseUserMethod(method);
+                }
+
+                ret.Add(method, baseMethod); 
             }
 
             return ret;
@@ -249,6 +258,11 @@ namespace Beinet.Repository.Tools
             } while (true);
 
             return value;
+        }
+
+        private object ParseUserMethod(MethodInfo method)
+        {
+            return null;
         }
     }
 }

@@ -99,10 +99,10 @@ namespace Beinet.Repository.Repositories
 
         private bool IsNew(T entity)
         {
-            var aID = (ID) Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
+            var aID = (ID)Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
             if (aID == null)
                 return true;
-            if (aID.Equals((ID) TypeHelper.GetDefaultValue(typeof(ID))))
+            if (aID.Equals((ID)TypeHelper.GetDefaultValue(typeof(ID))))
                 return true;
             return false;
         }
@@ -122,10 +122,14 @@ namespace Beinet.Repository.Repositories
                 var ret = command.ExecuteNonQuery();
                 if (ret <= 0)
                     throw new Exception("插入影响行数为0：" + sql);
+                if (Data.IsKeyIdentity)
+                {
+                    command.Parameters.Clear();
+                    command.CommandText = "SELECT LAST_INSERT_ID()";
+                    return Convert.ToInt64(command.ExecuteScalar());
+                }
 
-                command.Parameters.Clear();
-                command.CommandText = "SELECT LAST_INSERT_ID()";
-                return Convert.ToInt64(command.ExecuteScalar());
+                return 0;// 表示id不是自增主键
             }
         }
 
@@ -135,6 +139,19 @@ namespace Beinet.Repository.Repositories
             if (ret <= 0)
                 throw new Exception("更新影响行数为0：" + sql);
         }
+
+        private IDbDataParameter[] GetParameters(T entity)
+        {
+            var parameters = new IDbDataParameter[Data.Fields.Count];
+            var i = 0;
+            foreach (var pair in Data.Fields)
+            {
+                parameters[i] = CreatePara(pair.Key, pair.Value.Property.GetValue(entity, null));
+            }
+
+            return parameters;
+        }
+
         #endregion
 
 
@@ -289,19 +306,22 @@ namespace Beinet.Repository.Repositories
             if (entity == null)
                 throw new ArgumentException("参数不能为空");
 
+            var parameters = GetParameters(entity);
+
             if (IsNew(entity))
             {
                 var sql = Data.InsertSql;
-                var lastId = Insert(sql);
-                if (typeof(ID) == typeof(long) || typeof(ID) == typeof(int))
+                var lastId = Insert(sql, parameters);
+                // 有新插入的主键，则重新检索实体返回，以填充主键
+                if (lastId > 0)
                 {
-                    return FindById((ID) (object) lastId);
+                    return FindById((ID)(object)lastId);
                 }
             }
             else
             {
                 var sql = Data.UpdateSql;
-                Update(sql);
+                Update(sql, parameters);
             }
 
             return entity;
@@ -323,13 +343,55 @@ namespace Beinet.Repository.Repositories
                 throw new ArgumentException("参数不能为空.");
 
             var ret = new List<T>();
-            foreach (var entity in arr)
+            using (var connection = GetConnection())
+            using (var command = connection.CreateCommand())
             {
-                if (entity != null)
+                connection.Open();
+                using (var traction = connection.BeginTransaction())
                 {
-                    ret.Add(Save(entity));
+                    foreach (var entity in arr)
+                    {
+                        if (entity == null)
+                            continue;
+
+                        var isNew = IsNew(entity);
+                        command.CommandText = isNew ? Data.InsertSql : Data.UpdateSql;
+                        command.Parameters.Clear();
+                        foreach (var parameter in GetParameters(entity))
+                        {
+                            command.Parameters.Add(parameter);
+                        }
+
+                        var rownum = command.ExecuteNonQuery();
+                        if (rownum <= 0)
+                            throw new Exception("影响行数为0：" + command.CommandText);
+
+                        if (isNew && Data.IsKeyIdentity)
+                        {
+                            command.Parameters.Clear();
+                            command.CommandText = "SELECT LAST_INSERT_ID()";
+
+                            var lastId = Convert.ToInt64(command.ExecuteScalar());
+                            // 重新检索实体返回，以填充主键
+                            if (lastId > 0)
+                            {
+                                ret.Add(FindById((ID) (object) lastId));
+                            }
+                            else
+                            {
+                                ret.Add(entity);
+                            }
+                        }
+                        else
+                        {
+                            ret.Add(entity);
+                        }
+                    }
+
+                    traction.Commit();
                 }
             }
+
             return ret;
         }
 

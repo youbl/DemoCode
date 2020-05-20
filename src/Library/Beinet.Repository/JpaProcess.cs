@@ -70,7 +70,7 @@ namespace Beinet.Repository
         /// <summary>
         /// 收集的仓储方法列表，key为接口的方法，value为JpaRepositoryBase实现类的方法
         /// </summary>
-        private Dictionary<MethodInfo, MethodInfo> _arrJpaMethods;
+        private Dictionary<MethodInfo, object> _arrJpaMethods;
 
         private void Init()
         {
@@ -94,12 +94,12 @@ namespace Beinet.Repository
 
         public object Process(MethodInfo method, object[] parameters)
         {
-            if (!_arrJpaMethods.TryGetValue(method, out var baseMethod))
+            if (!_arrJpaMethods.TryGetValue(method, out var baseMethod) || baseMethod == null)
                 throw new ArgumentException("指定的方法未找到：" + EntityType.FullName + ": " + method.Name);
 
             // 调用基础接口定义的方法
-            if (baseMethod != null)
-                return baseMethod.Invoke(_jpaRepositoryBase, parameters);
+            if (baseMethod is MethodInfo baseMethodInfo)
+                return baseMethodInfo.Invoke(_jpaRepositoryBase, parameters);
 
             // todo：调用自定义方法，根据命名规则处理
 

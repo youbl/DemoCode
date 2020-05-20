@@ -39,6 +39,11 @@ namespace Beinet.Repository.Entitys
         /// </summary>
         public string UpdateSql { get; set; }
 
+        /// <summary>
+        /// 主键是否自增
+        /// </summary>
+        public bool IsKeyIdentity => Fields[KeyPropName].IsIdentity;
+
         public class FieldAtt
         {
             /// <summary>
@@ -53,6 +58,10 @@ namespace Beinet.Repository.Entitys
             /// 对应的类属性
             /// </summary>
             public PropertyInfo Property { get; set; }
+            /// <summary>
+            /// 是否自增
+            /// </summary>
+            public bool IsIdentity { get; set; }
         }
     }
 }
