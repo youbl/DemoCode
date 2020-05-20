@@ -7,7 +7,7 @@ namespace Beinet.Repository.Repositories
     /// </summary>
     /// <typeparam name="T">实体类型</typeparam>
     /// <typeparam name="ID">主键类型</typeparam>
-    public interface JpaRepository<T, ID>
+    public interface JpaRepository<T, ID>// where T : new()
     {
         /// <summary>
         /// 返回所有记录
@@ -20,9 +20,9 @@ namespace Beinet.Repository.Repositories
         /// <summary>
         /// 根据主键列表返回数据
         /// </summary>
-        /// <param name="IEnumerable"></param>
+        /// <param name="arrIds"></param>
         /// <returns></returns>
-        List<T> FindAllById(IEnumerable<ID> IEnumerable);
+        List<T> FindAllById(IEnumerable<ID> arrIds);
 
         /// <summary>
         /// 返回记录总数
@@ -34,39 +34,39 @@ namespace Beinet.Repository.Repositories
         /// 根据主键删除
         /// </summary>
         /// <param name="aID">主键</param>
-        void DeleteById(ID aID);
+        int DeleteById(ID aID);
 
         /// <summary>
         /// 根据实体删除
         /// </summary>
-        /// <param name="T">实体</param>
-        void Delete(T T);
+        /// <param name="entity">实体</param>
+        int Delete(T entity);
 
         /// <summary>
         /// 根据实体列表删除
         /// </summary>
-        /// <param name="arr">实体列表</param>
-        void DeleteAll(IEnumerable<T> arr);
+        /// <param name="arrEntities">实体列表</param>
+        int DeleteAll(IEnumerable<T> arrEntities);
 
         /// <summary>
         /// 根据主键列表删除
         /// </summary>
-        /// <param name="arr">主键列表</param>
-        void DeleteAll(IEnumerable<ID> arr);
+        /// <param name="arrIds">主键列表</param>
+        int DeleteAll(IEnumerable<ID> arrIds);
 
         /// <summary>
         /// 保存实体
         /// </summary>
-        /// <param name="s">实体</param>
+        /// <param name="entity">实体</param>
         /// <returns></returns>
-        T Save(T s);
+        T Save(T entity);
 
         /// <summary>
         /// 批量保存实体
         /// </summary>
-        /// <param name="IEnumerable"></param>
+        /// <param name="arrEntities"></param>
         /// <returns></returns>
-        List<T> SaveAll(IEnumerable<T> IEnumerable);
+        List<T> SaveAll(IEnumerable<T> arrEntities);
 
         /// <summary>
         /// 根据主键查找

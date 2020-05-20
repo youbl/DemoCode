@@ -10,7 +10,7 @@ namespace Beinet.Repository
     /// <summary>
     /// Jpa方法执行主调类
     /// </summary>
-    class JpaProcess
+    public class JpaProcess
     {
         private Type _repositoryType;
 
@@ -83,17 +83,27 @@ namespace Beinet.Repository
             if (string.IsNullOrEmpty(_data.KeyName))
                 throw new ArgumentException("未设置主键：" + EntityType.FullName);
 
-            _jpaRepositoryBase = typeof(JpaRepositoryBase<,>).MakeGenericType(EntityType, KeyType);
+            var runnerType = typeof(JpaRepositoryBase<,>).MakeGenericType(EntityType, KeyType);
+            _jpaRepositoryBase = Activator.CreateInstance(runnerType);
+
+            ((RepositoryProperty) _jpaRepositoryBase).Data = _data;
+            ((RepositoryProperty)_jpaRepositoryBase).DataSource = helper.ParseConnectionString(RepositoryType);
+
             _arrJpaMethods = helper.ParseRepostory(RepositoryType, _jpaRepositoryBase.GetType());
         }
 
-        public object Process(MethodInfo method)
+        public object Process(MethodInfo method, object[] parameters)
         {
             if (!_arrJpaMethods.TryGetValue(method, out var baseMethod))
                 throw new ArgumentException("指定的方法未找到：" + EntityType.FullName + ": " + method.Name);
+
+            // 调用基础接口定义的方法
             if (baseMethod != null)
-                return baseMethod.Invoke();
-            return null;
+                return baseMethod.Invoke(_jpaRepositoryBase, parameters);
+
+            // todo：调用自定义方法，根据命名规则处理
+
+            return TypeHelper.GetDefaultValue(method.ReturnType);
         }
 
 

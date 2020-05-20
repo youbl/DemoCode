@@ -15,6 +15,10 @@ namespace Beinet.Repository.Entitys
         /// </summary>
         public string TableName { get; set; }
         /// <summary>
+        /// 主键属性名
+        /// </summary>
+        public string KeyPropName { get; set; }
+        /// <summary>
         /// 主键字段名
         /// </summary>
         public string KeyName { get; set; }

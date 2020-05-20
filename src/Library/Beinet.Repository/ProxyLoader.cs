@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using Beinet.Repository.Repositories;
 using LinFu.DynamicProxy;
 
 namespace Beinet.Repository
@@ -41,15 +40,19 @@ namespace Beinet.Repository
             {
                 if (!type.IsInterface)
                     throw new ArgumentException("必须是接口类型");
+
+                var baseType = typeof(JpaRepository<,>);
+
                 var repositoryType = type.GetInterfaces()
-                    .FirstOrDefault(tp => tp.Namespace == "Beinet.Repository" && tp.Name == "JpaRepository`2");
-                if (repositoryType == default(Type))
-                    throw new ArgumentException("必须实现类型：Beinet.Repository.JpaRepository`2");
+                    .FirstOrDefault(tp => tp.Namespace == baseType.Namespace && tp.Name == "JpaRepository`2");
+                if (repositoryType == default)
+                    throw new ArgumentException($"必须实现类型：{baseType.FullName}");
                 if (repositoryType.GenericTypeArguments.Length != 2)
-                    throw new ArgumentException("必须实现类型：Beinet.Repository.JpaRepository`2, 类型参数个数有误");
+                    throw new ArgumentException($"必须实现类型：{baseType.FullName}, 类型参数个数有误");
                 
                 var wrapper = new ProxyInvokeWrapper();
                 var ret = (JpaProcess)_factory.CreateProxy(typeof(JpaProcess), wrapper, type);
+                ret.RepositoryType = type;
                 ret.EntityType = repositoryType.GenericTypeArguments[0];
                 ret.KeyType = repositoryType.GenericTypeArguments[1];
 
@@ -65,6 +68,7 @@ namespace Beinet.Repository
 
             public void BeforeInvoke(InvocationInfo info)
             {
+                // Method intentionally left empty.
             }
 
             public object DoInvoke(InvocationInfo info)
@@ -84,11 +88,12 @@ namespace Beinet.Repository
                         return this.ToString();
                 }
                 
-                return instance.Process(method.Name, method.ReturnType);
+                return instance.Process(method, info.Arguments);
             }
 
             public void AfterInvoke(InvocationInfo info, object returnValue)
             {
+                // Method intentionally left empty.
             }
 
         }

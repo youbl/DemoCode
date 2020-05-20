@@ -90,13 +90,14 @@ namespace Beinet.Feign
 
             public void BeforeInvoke(InvocationInfo info)
             {
+                // Method intentionally left empty.
             }
 
             public object DoInvoke(InvocationInfo info)
             {
                 var instance = info.Target as FeignProcess;
                 if (instance == null)
-                    throw new Exception("实例创建有问题: " + info.Target.GetType());
+                    throw new ArgumentException("实例创建有问题: " + info.Target.GetType());
 
                 var method = info.TargetMethod;
                 switch (method.Name)
@@ -117,6 +118,7 @@ namespace Beinet.Feign
 
             public void AfterInvoke(InvocationInfo info, object returnValue)
             {
+                // Method intentionally left empty.
             }
 
 

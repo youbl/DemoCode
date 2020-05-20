@@ -37,6 +37,9 @@
     <Reference Include="LinFu.DynamicProxy, Version=1.0.4.16035, Culture=neutral, PublicKeyToken=62a6874124340d6e, processorArchitecture=MSIL">
       <HintPath>..\..\packages\LinFu.DynamicProxy.OfficialRelease.1.0.5\lib\net\LinFu.DynamicProxy.dll</HintPath>
     </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\..\DemoCodeWeb\dll\MySql.Data.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Newtonsoft.Json.12.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -44,6 +47,7 @@
       <HintPath>..\..\packages\NLog.4.7.0\lib\net40-client\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
   </ItemGroup>
@@ -53,6 +57,9 @@
     <Compile Include="Entitys\ColumnAttribute.cs" />
     <Compile Include="Entitys\IdAttribute.cs" />
     <Compile Include="JpaProcess.cs" />
+    <Compile Include="Repositories\DataSourceConfigurationAttribute.cs" />
+    <Compile Include="Repositories\RepositoryProperty.cs" />
+    <Compile Include="Repositories\QueryAttribute.cs" />
     <Compile Include="Repositories\JpaRepositoryBase.cs" />
     <Compile Include="ProxyLoader.cs" />
     <Compile Include="Entitys\TableAttribute.cs" />

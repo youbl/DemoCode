@@ -11,10 +11,9 @@ namespace Beinet.RepositoryTest
         [TestMethod]
         public void TestMethod1()
         {
-            var type = typeof(RepositoryStudent);
-            var arrTp = type.GetInterfaces()[0];
-
             var repository = ProxyLoader.GetProxy<RepositoryStudent>();
+            var cnt = repository.Count();
+            Assert.AreEqual(1, cnt);
         }
     }
 }
