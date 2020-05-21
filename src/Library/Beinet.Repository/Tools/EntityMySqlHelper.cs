@@ -128,6 +128,9 @@ namespace Beinet.Repository.Tools
                 ret.Fields.Add(propName, field);
             }
 
+            if (string.IsNullOrEmpty(ret.KeyName))
+                throw new ArgumentException("未找到主键设置：" + entityType.FullName);
+
             sbSelect.Remove(sbSelect.Length - 1, 1)
                 .Insert(0, "SELECT ")
                 .AppendFormat(" FROM {0}", ret.TableName);
@@ -145,7 +148,11 @@ namespace Beinet.Repository.Tools
 
             sbUpdate.Remove(sbUpdate.Length - 1, 1).Insert(0, " SET ")
                 .Insert(0, ret.TableName)
-                .Insert(0, "UPDATE ");
+                .Insert(0, "UPDATE ")
+                .Append(" WHERE ")
+                .Append(ret.KeyName)
+                .Append("=@")
+                .Append(ret.KeyPropName);
             ret.UpdateSql = sbUpdate.ToString();
         }
 

@@ -3,6 +3,7 @@
 using System;
 using Beinet.Repository;
 using Beinet.Repository.Entitys;
+using Newtonsoft.Json;
 
 namespace Beinet.RepositoryTest.Entitys
 {
@@ -32,5 +33,10 @@ namespace Beinet.RepositoryTest.Entitys
 
         [Column(Name= "LastModificationTime", Insertable = false, Updatable = false)]
         public DateTime LastTime { get; set; }
+
+        public override string ToString()
+        {
+            return JsonConvert.SerializeObject(this);
+        }
     }
 }

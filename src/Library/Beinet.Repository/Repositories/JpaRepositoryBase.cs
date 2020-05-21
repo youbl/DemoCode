@@ -147,6 +147,7 @@ namespace Beinet.Repository.Repositories
             foreach (var pair in Data.Fields)
             {
                 parameters[i] = CreatePara(pair.Key, pair.Value.Property.GetValue(entity, null));
+                i++;
             }
 
             return parameters;
@@ -375,7 +376,14 @@ namespace Beinet.Repository.Repositories
                             // 重新检索实体返回，以填充主键
                             if (lastId > 0)
                             {
-                                ret.Add(FindById((ID) (object) lastId));
+                                command.Parameters.Clear();
+                                command.CommandText = $"{Data.SelectSql} WHERE {Data.KeyName}=@id";
+                                command.Parameters.Add(CreatePara("id", lastId));
+                                using (var reader = command.ExecuteReader())
+                                {
+                                    reader.Read();
+                                    ret.Add(ConvertTo(reader));
+                                }
                             }
                             else
                             {
