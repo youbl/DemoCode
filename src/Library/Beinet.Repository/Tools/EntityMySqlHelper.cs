@@ -159,10 +159,11 @@ namespace Beinet.Repository.Tools
         /// <summary>
         /// 解析实体接口类型和基础类型的方法，并返回映射关系
         /// </summary>
-        /// <param name="entityRepostoryType"></param>
-        /// <param name="runnerType"></param>
+        /// <param name="entityRepostoryType">用户仓储接口类</param>
+        /// <param name="runnerType">内部JpaRepostoryBase类</param>
+        /// <param name="data">实体属性与字段映射关系</param>
         /// <returns></returns>
-        public Dictionary<MethodInfo, object> ParseRepostory(Type entityRepostoryType, Type runnerType)
+        public Dictionary<MethodInfo, object> ParseRepostory(Type entityRepostoryType, Type runnerType, EntityData data)
         {
             var baseType = entityRepostoryType.GetInterfaces()
                 .FirstOrDefault(
@@ -202,7 +203,7 @@ namespace Beinet.Repository.Tools
                 if (baseMethod == null)
                 {
                     // 不属于基础方法，说明是用户自定义方法，要根据Query注解或方法名，进行解析处理
-                    baseMethod = ParseUserMethod(method);
+                    baseMethod = ParseUserMethod(method, data);
                 }
 
                 ret.Add(method, baseMethod); 
@@ -211,6 +212,25 @@ namespace Beinet.Repository.Tools
             return ret;
         }
 
+        /// <summary>
+        /// 返回执行用户自定义方法的Method
+        /// </summary>
+        /// <param name="runnerType">内部JpaRepostoryBase类</param>
+        /// <returns></returns>
+        public MethodInfo GetCustomerMethod(Type runnerType)
+        {
+            var ret = runnerType.GetMethod(nameof(JpaRepositoryBase<int, int>.CustomerMethod),
+                BindingFlags.Instance | BindingFlags.Public);
+            if (ret == null)
+                throw new ArgumentException("未找到底层方法GetCustomerMethod");
+            return ret;
+        }
+
+        /// <summary>
+        /// 解析数据库连接串
+        /// </summary>
+        /// <param name="entityRepostoryType"></param>
+        /// <returns></returns>
         public DataSourceConfigurationAttribute ParseConnectionString(Type entityRepostoryType)
         {
             var dstt = entityRepostoryType.GetCustomAttribute<DataSourceConfigurationAttribute>();
@@ -237,6 +257,11 @@ namespace Beinet.Repository.Tools
             return dstt;
         }
 
+        /// <summary>
+        /// 从Config配置文件里读取配置，替换占位符
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         private string ReplaceHolder(string value)
         {
             int idx = -1;
@@ -267,9 +292,32 @@ namespace Beinet.Repository.Tools
             return value;
         }
 
-        private object ParseUserMethod(MethodInfo method)
+        /// <summary>
+        ///  解析用户自定义方法
+        /// </summary>
+        /// <param name="method">方法</param>
+        /// <param name="data">实体属性与字段映射</param>
+        /// <returns></returns>
+        private CustomData ParseUserMethod(MethodInfo method, EntityData data)
         {
-            return null;
+            var queryAtt = method.GetCustomAttribute<QueryAttribute>();
+            if (queryAtt == null)
+            {
+                var sql = new SqlParser().GetSql(method.Name, method.GetParameters(), data);
+                queryAtt = new QueryAttribute(sql);
+            }
+
+            if (string.IsNullOrEmpty(queryAtt.Value))
+                throw new ArgumentException("方法的Query不允许为空：" + method.Name);
+
+            var ret = new CustomData
+            {
+                Sql = queryAtt.Value,
+                IsModify = method.GetCustomAttribute<ModifingAttribute>() != null,
+                ReturnType = method.ReturnType,
+            };
+            return ret;
         }
+
     }
 }

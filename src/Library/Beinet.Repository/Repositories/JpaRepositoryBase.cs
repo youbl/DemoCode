@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -435,5 +436,91 @@ namespace Beinet.Repository.Repositories
 
 
         #endregion
+
+        /// <summary>
+        /// 自定义方法入口，暂不支持类型T或基础类型以外的类型
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="parameters"></param>
+        /// <returns></returns>
+        public object CustomerMethod(CustomData query, object[] parameters)
+        {
+            // https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#reference  Query支持表名占位符替换
+            var sql = query.Sql.Replace("#{#entityName}", Data.TableName);
+
+            var arrPara = new IDbDataParameter[parameters.Length];
+
+            // JPA参数索引从1开始, 从高往低替换，避免把 ?12 的 ?1 替换掉了
+            for (var i = parameters.Length; i >= 1; i--)
+            {
+                var strIdx = i.ToString();
+                var symbol = "?" + i.ToString();
+                var varName = "PARA" + strIdx;
+                sql = sql.Replace(symbol, "@" + varName);
+                arrPara[i - 1] = CreatePara(varName, parameters[i - 1]);
+            }
+
+            if (query.IsModify)
+            {
+                var retModiNum = ExecuteNonQuery(sql, arrPara);
+                if (query.ReturnType == typeof(void))
+                    return null;
+                return Convert.ChangeType(retModiNum, query.ReturnType);
+            }
+
+            if (query.ReturnType == typeof(void))
+                throw new ArgumentException("查询方法返回值不能为空:" + query.Sql);
+
+            var isSimpleType = query.ReturnType == typeof(int) ||
+                               query.ReturnType == typeof(long) ||
+                               query.ReturnType == typeof(short) ||
+                               query.ReturnType == typeof(float) ||
+                               query.ReturnType == typeof(decimal) ||
+                               query.ReturnType == typeof(DateTime) ||
+                               query.ReturnType == typeof(string);
+
+            var isArray = typeof(IEnumerable).IsAssignableFrom(query.ReturnType);
+
+            var ret = new List<T>();
+            using (var reader = ExecuteReader(sql, arrPara))
+            {
+                while (reader.Read())
+                {
+                    if (isSimpleType)
+                    {
+                        //if (reader.FieldCount > 1)
+                        //    throw new Exception("查询结果不止一列");
+                        return Convert.ChangeType(reader[0], query.ReturnType);
+                    }
+
+                    if (!isArray)
+                    {
+                        return ConvertTo(reader);
+                    }
+                    ret.Add(ConvertTo(reader));
+                }
+            }
+
+            // 数组只支持List<T> 或 T[]
+            if (query.ReturnType.IsArray)
+                return ret.ToArray();
+            return ret;
+        }
+    }
+
+    internal class CustomData
+    {
+        /// <summary>
+        /// SQL
+        /// </summary>
+        public string Sql { get; set; }
+        /// <summary>
+        /// 是否DML
+        /// </summary>
+        public bool IsModify { get; set; }
+        /// <summary>
+        /// 返回参数类型
+        /// </summary>
+        public Type ReturnType { get; set; }
     }
 }
