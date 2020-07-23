@@ -121,42 +121,12 @@ namespace Beinet.Feign
         public object Process(RequestMappingAttribute methodAtt, Dictionary<string, ArgumentItem> args, Type returnType)
         {
             var method = methodAtt.Method;
-            if (string.IsNullOrEmpty(method))
-                method = GET;
-            else
-                method = method.ToUpper();
 
             Uri paraUri = null;
             object bodyArg = null;
             if (args != null)
             {
-                foreach (var argumentItem in args.Values)
-                {
-                    if (argumentItem.Value == null)
-                        continue;
-
-                    if (argumentItem.Type == ArgType.None)
-                    {
-                        if (argumentItem.Value is Uri uri)
-                        {
-                            // 查找Uri类型参数数据，如果有，用于替换FeignClient的Url
-                            paraUri = uri;
-                        }
-                        else if (argumentItem.Value is Type type)
-                        {
-                            if (!returnType.IsAssignableFrom(type))
-                                throw new Exception($"指定的参数类型{type}，必须是返回类型{returnType}的子类");
-
-                            // 查找Type类型参数数据，如果有，用于替换returnType
-                            returnType = type;
-                        }
-                    }
-                    else if (argumentItem.Type == ArgType.Body)
-                    {
-                        // 查找POST参数数据
-                        bodyArg = argumentItem.Value;
-                    }
-                }
+                GetUriAndBody(args, ref paraUri, ref returnType, ref bodyArg);
             }
 
             if (bodyArg != null && method == GET)
@@ -203,7 +173,45 @@ namespace Beinet.Feign
                 return TypeHelper.GetDefaultValue(returnType);
             }
 
-            throw new Exception("Decoding返回的对象类型必须是：" + returnType.FullName + "，不允许是：" + realType.FullName);
+            throw new ArgumentException("Decoding返回的对象类型必须是：" + returnType.FullName + "，不允许是：" + realType.FullName);
+        }
+
+        /// <summary>
+        /// 从参数中，解析出要请求的url、返回值类型、Post参数。
+        /// </summary>
+        /// <param name="args">参数列表</param>
+        /// <param name="paraUri">参数列表里指定的请求Uri，不一定存在</param>
+        /// <param name="returnType">参数列表里指定的响应值类型，不一定存在</param>
+        /// <param name="bodyArg">参数列表里指定的Post参数，不一定存在</param>
+        static void GetUriAndBody(Dictionary<string, ArgumentItem> args, ref Uri paraUri, ref Type returnType, ref object bodyArg)
+        {
+            foreach (var argumentItem in args.Values)
+            {
+                if (argumentItem.Value == null)
+                    continue;
+
+                if (argumentItem.Type == ArgType.None)
+                {
+                    if (argumentItem.Value is Uri uri)
+                    {
+                        // 查找Uri类型参数数据，如果有，用于替换FeignClient的Url
+                        paraUri = uri;
+                    }
+                    else if (argumentItem.Value is Type type)
+                    {
+                        if (!returnType.IsAssignableFrom(type))
+                            throw new ArgumentException($"指定的参数类型{type}，必须是返回类型{returnType}的子类");
+
+                        // 查找Type类型参数数据，如果有，用于替换returnType
+                        returnType = type;
+                    }
+                }
+                else if (argumentItem.Type == ArgType.Body)
+                {
+                    // 查找POST参数数据
+                    bodyArg = argumentItem.Value;
+                }
+            }
         }
 
         /// <summary>
@@ -215,8 +223,31 @@ namespace Beinet.Feign
         static string ParseUrl(string url, Dictionary<string, ArgumentItem> args)
         {
             if (string.IsNullOrEmpty(url))
-                throw new Exception("url不允许为空");
+                throw new ArgumentException("url不允许为空");
 
+            url = ReplaceHolder(url, args);
+
+            // 拼接列表里的查询参数
+            if (args != null && args.Count > 0)
+            {
+                var queryString = CombineQueryString(args);
+                if (queryString.Length > 0)
+                {
+                    url += (url.IndexOf('?') > 0 ? '&' : '?') + queryString;
+                }
+            }
+
+            return url;
+        }
+
+        /// <summary>
+        /// 占位符替换处理
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        static string ReplaceHolder(string url, Dictionary<string, ArgumentItem> args)
+        {
             int idx = -1;
             do
             {
@@ -243,31 +274,55 @@ namespace Beinet.Feign
                     throw new Exception($"占位符{{{argName}}}在参数列表或配置文件中，均不存在");
                 }
 
-                url = url.Replace("{" + argName + "}", Convert.ToString(val));
+                url = url.Replace("{" + argName + "}", ConvertToUriPara(val));
             } while (true);
 
-            // 拼接列表里的查询参数
-            if (args != null && args.Count > 0)
+            return url;
+        }
+
+        /// <summary>
+        /// 拼接需要放在Url后面的QueryString
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        static string CombineQueryString(Dictionary<string, ArgumentItem> args)
+        {
+            var sbArgs = new StringBuilder();
+            foreach (var pair in args)
             {
-                var sbArgs = new StringBuilder();
-                foreach (var pair in args)
-                {
-                    var arg = pair.Value;
-                    if (arg.Type != ArgType.Param)
-                        continue;
+                var arg = pair.Value;
+                if (arg.Type != ArgType.Param)
+                    continue;
 
-                    var encodingVal = HttpUtility.UrlEncode(Convert.ToString(arg.Value));
-                    sbArgs.AppendFormat("{0}={1}&", arg.HttpName, encodingVal);
-                }
-
-                if (sbArgs.Length > 0)
-                {
-                    sbArgs.Insert(0, url.IndexOf('?') > 0 ? '&' : '?');
-                    url += sbArgs;
-                }
+                var encodingVal = HttpUtility.UrlEncode(Convert.ToString(arg.Value));
+                sbArgs.AppendFormat("{0}={1}&", arg.HttpName, encodingVal);
             }
 
-            return url;
+            return sbArgs.ToString();
+        }
+
+        /// <summary>
+        /// 把指定的参数，转换为Url上可用的字符串
+        /// </summary>
+        /// <param name="val">参数</param>
+        /// <returns>字符串</returns>
+        static string ConvertToUriPara(object val)
+        {
+            if (val is System.Collections.IEnumerable data)
+            {
+                var enumerator = data.GetEnumerator();
+                StringBuilder sbBuilder = new StringBuilder();
+                while (enumerator.MoveNext())
+                {
+                    if (sbBuilder.Length > 0)
+                        sbBuilder.Append(",");
+                    sbBuilder.Append(enumerator.Current);
+                }
+
+                val = sbBuilder.ToString();
+            }
+
+            return HttpUtility.UrlEncode(Convert.ToString(val));
         }
 
         void Log(LogMessageGenerator messageFunc)

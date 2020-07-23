@@ -8,6 +8,8 @@ namespace Beinet.Feign
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
     public class RequestMappingAttribute : Attribute
     {
+        private string method;
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -26,7 +28,18 @@ namespace Beinet.Feign
         /// <summary>
         /// GET/POST/PUT/DELETE等
         /// </summary>
-        public virtual string Method { get; private set; }
+        public virtual string Method
+        {
+            get { return method;}
+            private set
+            {
+                if (string.IsNullOrEmpty(value))
+                    value = "GET";
+                else
+                    value = value.ToUpper();// HTTP协议要求大写
+                method = value;
+            }
+        }
 
         /// <summary>
         /// 请求使用的Header头信息，格式为： user-agent=beinet-1.0
