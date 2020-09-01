@@ -23,13 +23,13 @@ namespace Beinet.Core.Cron
         /// <summary>
         /// 扫描计划任务，并启动定时执行
         /// </summary>
-        public static void StartAllScheduled()
+        public static int StartAllScheduled()
         {
             lock (_lockObj)
             {
                 if (_runed)
                 {
-                    return;
+                    return 0;
                 }
 
                 _runed = true;
@@ -49,6 +49,8 @@ namespace Beinet.Core.Cron
                 _timer = new Timer(ScheduledRun, allMethod, 0, 1000);
                 Info($"Timer inited ok: {_timer}");
             }
+
+            return cnt;
         }
 
         /// <summary>

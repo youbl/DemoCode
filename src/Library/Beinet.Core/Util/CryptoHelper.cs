@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Beinet.Core.FileExt;
 
 namespace Beinet.Core.Util
 {

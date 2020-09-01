@@ -75,7 +75,7 @@ namespace Beinet.Core
                     var ret = new Dictionary<string, string>();
                     if (File.Exists(_jenkinsEnvFile))
                     {
-                        var arrContent = FileHelper.Read(_jenkinsEnvFile).Split('\r', '\n');
+                        var arrContent = File.ReadAllText(_jenkinsEnvFile).Split('\r', '\n');
                         foreach (var item in arrContent)
                         {
                             var idx = item.IndexOf('=');

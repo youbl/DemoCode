@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Beinet.Core.FileExt;
 using Beinet.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;

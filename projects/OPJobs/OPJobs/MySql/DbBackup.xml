@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Monitors>
+    <!-- 
+	节点的TagName为数据库类型；
+	节点的属性说明；
+    Server：服务器IP或域名；
+    Port：数据库监听端口，MySql默认3306，,SqlServer默认1433；
+    Uid：数据库用户名；
+    Pwd：数据库密码；
+    Database：要备份的数据库名，为空表示该服务器所有数据库；
+    BackData属性：true表示备份数据，默认为false，仅备份表结构；
+  -->
+    <MySql Server="10.2.3.101" Port="13306" Uid="beinet" Pwd="123456" BackData="false"></MySql>
+</Monitors>
