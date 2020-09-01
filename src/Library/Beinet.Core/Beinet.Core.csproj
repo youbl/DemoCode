@@ -58,14 +58,12 @@
     <Compile Include="EnumExt\EnumHelper.cs" />
     <Compile Include="Env.cs" />
     <Compile Include="FileExt\FileHelper.cs" />
+    <Compile Include="Logging\LogHelper.cs" />
     <Compile Include="NumberExt\NumHelper.cs" />
     <Compile Include="RetryHelper.cs" />
     <Compile Include="IRunable.cs" />
     <Compile Include="Lock\LockDefault.cs" />
     <Compile Include="Lock\ILock.cs" />
-    <Compile Include="Logging\NLogHelper.cs" />
-    <Compile Include="Logging\LoggerDefault.cs" />
-    <Compile Include="Logging\ILogger.cs" />
     <Compile Include="MQBase\IMqConsumer.cs" />
     <Compile Include="MQBase\IMqProducer.cs" />
     <Compile Include="MQBase\Message.cs" />
@@ -83,7 +81,7 @@
     <Compile Include="Serializer\JsonSerializer.cs" />
     <Compile Include="StringExt\StringHelper.cs" />
     <Compile Include="Util\ConfigHelper.cs" />
-    <Compile Include="Util\CryptoHelper.cs" />
+    <Compile Include="CryptExt\CryptoHelper.cs" />
     <Compile Include="Util\IpHelper.cs" />
     <Compile Include="Util\WebHelper.cs" />
     <Compile Include="Xml\XmlHelper.cs" />
@@ -92,5 +90,6 @@
     <None Include="Beinet.Core.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

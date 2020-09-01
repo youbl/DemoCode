@@ -3,8 +3,9 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using Beinet.Core.FileExt;
+using Beinet.Core.Util;
 
-namespace Beinet.Core.Util
+namespace Beinet.Core.CryptExt
 {
     /// <summary>
     /// º”√‹∞Ô÷˙¿‡ 

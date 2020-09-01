@@ -1,5 +1,4 @@
 ﻿/* 存储表信息的表结构 */
-
 CREATE TABLE `dbdata` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `dbname` varchar(50) NOT NULL COMMENT '数据库名',
@@ -15,7 +14,7 @@ CREATE TABLE `dbdata` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库采集';
 
 
-
+/* 如果是采集当前实例，可以直接用这个SQL采集 */
 INSERT INTO `dbdata` (
   `dbname`,
   `tbname`,
@@ -27,4 +26,10 @@ INSERT INTO `dbdata` (
 )
 SELECT t.table_schema, t.table_name, t.table_rows, t.avg_row_length, t.data_length , t.index_length, t.auto_increment
 FROM information_schema.tables t
-WHERE t.`TABLE_SCHEMA` NOT IN ('performance_schema', 'sys', 'information_schema', 'mysql')
+WHERE t.`TABLE_SCHEMA` NOT IN ('performance_schema', 'sys', 'information_schema', 'mysql');
+
+
+/* 按每2次采集的增长行数，进行查询，看哪个表的增长最快 */
+SELECT a.*, 
+  a.rownum-(SELECT rownum FROM dbdata b WHERE a.dbname=b.dbname AND a.tbname=b.tbname AND b.creationTime<a.creationTime ORDER BY a.id DESC LIMIT 1) incRow
+ FROM dbdata a ORDER BY incRow DESC;
