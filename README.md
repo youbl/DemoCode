@@ -10,6 +10,10 @@ Library目录：
 Feign是Java里的一个声明式的http api请求库，可以通过注解（类似.Net的特性）来快速并优雅的封装对http的调用，并且方便理解和后续的维护，已经广泛的在Spring Cloud的解决方案中应用。  
 具体调用，可以参考 src\Test\Beinet.FeignDemoConsole 项目，里面有完整示例代码。    
 或者参考我的博客：https://blog.csdn.net/youbl/article/details/105006665    
+4、Beinet.EnumList: 扫描整个项目的枚举清单，并添加一个url路由 /actuator/enums, 以便快速浏览项目中的枚举；  
+便于自己或其它依赖此枚举的项目，可以快速发现枚举列表的变更情况，比如前端.  
+对项目代码无侵入，编译后，直接把这个dll复制到对方站点bin目录下即可。  
+注：此项目依赖NewtonSoft  
   
   
 其它演示：  
