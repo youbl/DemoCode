@@ -36,7 +36,7 @@ namespace Beinet.Feign
         {
             if (!IsUrl(url))
                 url = "http://" + url;
-            
+
             var isGet = method == "GET"; // GET时，不对参数进行序列化处理
 
             var request = (HttpWebRequest) WebRequest.Create(url);
@@ -68,7 +68,7 @@ namespace Beinet.Feign
             {
                 foreach (var interceptor in interceptors)
                 {
-                    interceptor.BeforeRequest(request);
+                    interceptor.BeforeRequest(request, postStr);
                 }
             }
 
@@ -112,6 +112,7 @@ namespace Beinet.Feign
                         sb.AppendFormat("  {0}={1}\n", header, request.Headers[header]);
                     }
                 }
+
                 return sb.ToString();
             });
 
@@ -119,11 +120,12 @@ namespace Beinet.Feign
             {
                 using (var response = (HttpWebResponse) request.GetResponse())
                 {
+                    var ret = GetResponseString(response);
                     if (interceptors != null)
                     {
                         foreach (var interceptor in interceptors)
                         {
-                            interceptor.AfterRequest(request, response, null);
+                            interceptor.AfterRequest(request, response, ret, null);
                         }
                     }
 
@@ -135,7 +137,6 @@ namespace Beinet.Feign
                         sb.AppendFormat("  {0}={1}\n", header, response.Headers[header]);
                     }
 
-                    var ret = GetResponseString(response);
                     sb.Append(ret);
                     _logger.Log(level, sb.ToString);
 
@@ -146,11 +147,20 @@ namespace Beinet.Feign
             {
                 if (interceptors != null)
                 {
+                    var responseStr = "";
+                    HttpWebResponse response = null;
+                    if (exp is WebException webExp && webExp.Response != null && webExp.Response is HttpWebResponse)
+                    {
+                        response = (HttpWebResponse) webExp.Response;
+                        responseStr = GetResponseString(response);
+                    }
+
                     foreach (var interceptor in interceptors)
                     {
-                        interceptor.AfterRequest(request, null, exp);
+                        interceptor.AfterRequest(request, response, responseStr, exp);
                     }
                 }
+
                 throw;
             }
         }
