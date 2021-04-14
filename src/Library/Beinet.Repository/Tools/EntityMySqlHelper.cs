@@ -136,6 +136,16 @@ namespace Beinet.Repository.Tools
                 .AppendFormat(" FROM {0}", ret.TableName);
             ret.SelectSql = sbSelect.ToString();
 
+            if (sbInsertVal.Length <= 0)
+            {
+                throw new ArgumentException("未找到可插入的字段：" + entityType.FullName);
+            }
+
+            if (sbUpdate.Length <= 0)
+            {
+                throw new ArgumentException("未找到可更新的字段：" + entityType.FullName);
+            }
+
             sbInsertVal.Remove(sbInsertVal.Length - 1, 1);
             sbInsertKey.Remove(sbInsertKey.Length - 1, 1)
                 .Insert(0, " (")
@@ -206,7 +216,7 @@ namespace Beinet.Repository.Tools
                     baseMethod = ParseUserMethod(method, data);
                 }
 
-                ret.Add(method, baseMethod); 
+                ret.Add(method, baseMethod);
             }
 
             return ret;
@@ -318,6 +328,5 @@ namespace Beinet.Repository.Tools
             };
             return ret;
         }
-
     }
 }

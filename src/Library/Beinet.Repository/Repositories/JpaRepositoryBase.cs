@@ -21,6 +21,7 @@ namespace Beinet.Repository.Repositories
         /// 数据库连接字符串
         /// </summary>
         public DataSourceConfigurationAttribute DataSource { get; set; }
+
         /// <summary>
         /// T实体类的信息
         /// </summary>
@@ -49,7 +50,7 @@ namespace Beinet.Repository.Repositories
             }
 
             connection.Open();
-            return command.ExecuteReader();
+            return command.ExecuteReader(CommandBehavior.CloseConnection);
         }
 
         private object ExecuteScalar(string sql, params IDbDataParameter[] parameters)
@@ -92,18 +93,19 @@ namespace Beinet.Repository.Repositories
                 var value = reader[dataField.Value.Name]; // 未验证带表名时，会不会有问题
                 if (value == null || value == DBNull.Value)
                     continue;
-                dataField.Value.Property.SetValue(ret, value, null);
+                var useVal = Convert.ChangeType(value, dataField.Value.Property.PropertyType);
+                dataField.Value.Property.SetValue(ret, useVal, null);
             }
 
-            return (T)ret;
+            return (T) ret;
         }
 
         private bool IsNew(T entity)
         {
-            var aID = (ID)Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
+            var aID = (ID) Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
             if (aID == null)
                 return true;
-            if (aID.Equals((ID)TypeHelper.GetDefaultValue(typeof(ID))))
+            if (aID.Equals((ID) TypeHelper.GetDefaultValue(typeof(ID))))
                 return true;
             return false;
         }
@@ -130,7 +132,7 @@ namespace Beinet.Repository.Repositories
                     return Convert.ToInt64(command.ExecuteScalar());
                 }
 
-                return 0;// 表示id不是自增主键
+                return 0; // 表示id不是自增主键
             }
         }
 
@@ -158,8 +160,6 @@ namespace Beinet.Repository.Repositories
 
 
         #region Jpa基础方法集
-
-
 
         /// <summary>
         /// 返回所有记录
@@ -204,6 +204,7 @@ namespace Beinet.Repository.Repositories
                 sql.Append("@").Append(paraName).Append(",");
                 arrParam.Add(CreatePara(paraName, arr[i]));
             }
+
             sql.Remove(sql.Length - 1, 1);
             sql.Append(")");
             var ret = new List<T>();
@@ -251,7 +252,7 @@ namespace Beinet.Repository.Repositories
             if (entity == null)
                 throw new ArgumentException("参数不能为空");
 
-            var aID = (ID)Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
+            var aID = (ID) Data.Fields[Data.KeyPropName].Property.GetValue(entity, null);
             return DeleteById(aID);
         }
 
@@ -265,7 +266,7 @@ namespace Beinet.Repository.Repositories
                 throw new ArgumentException("参数不能为空");
 
             var property = Data.Fields[Data.KeyPropName].Property;
-            var arrIds = arrEntities.Select(item => (ID)property.GetValue(item, null));
+            var arrIds = arrEntities.Select(item => (ID) property.GetValue(item, null));
             return DeleteAll(arrIds);
         }
 
@@ -317,7 +318,8 @@ namespace Beinet.Repository.Repositories
                 // 有新插入的主键，则重新检索实体返回，以填充主键
                 if (lastId > 0)
                 {
-                    return FindById((ID)(object)lastId);
+                    ID useId = (ID) Convert.ChangeType(lastId, typeof(ID));
+                    return FindById(useId); // (ID) (object) lastId);
                 }
             }
             else
@@ -434,7 +436,6 @@ namespace Beinet.Repository.Repositories
             return Convert.ToString(result) == "1";
         }
 
-
         #endregion
 
         /// <summary>
@@ -445,6 +446,11 @@ namespace Beinet.Repository.Repositories
         /// <returns></returns>
         public object CustomerMethod(CustomData query, object[] parameters)
         {
+            if (query.ReturnType.IsArray)
+            {
+                throw new ArgumentException("只支持List，不支持数组");
+            }
+
             // https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#reference  Query支持表名占位符替换
             var sql = query.Sql.Replace("#{#entityName}", Data.TableName);
 
@@ -481,7 +487,13 @@ namespace Beinet.Repository.Repositories
 
             var isArray = typeof(IEnumerable).IsAssignableFrom(query.ReturnType);
 
-            var ret = new List<T>();
+            IList ret = null;
+            if (isArray)
+            {
+                ret = (IList) Activator.CreateInstance(
+                    typeof(List<>).MakeGenericType(query.ReturnType.GenericTypeArguments));
+            }
+
             using (var reader = ExecuteReader(sql, arrPara))
             {
                 while (reader.Read())
@@ -497,13 +509,17 @@ namespace Beinet.Repository.Repositories
                     {
                         return ConvertTo(reader);
                     }
+
                     ret.Add(ConvertTo(reader));
                 }
             }
 
-            // 数组只支持List<T> 或 T[]
-            if (query.ReturnType.IsArray)
-                return ret.ToArray();
+            // 数组只支持List<T>, 不支持T[]
+//            if (query.ReturnType.IsArray)
+//            {
+//                 return ret.ToArray();
+//            }
+
             return ret;
         }
     }
@@ -514,10 +530,12 @@ namespace Beinet.Repository.Repositories
         /// SQL
         /// </summary>
         public string Sql { get; set; }
+
         /// <summary>
         /// 是否DML
         /// </summary>
         public bool IsModify { get; set; }
+
         /// <summary>
         /// 返回参数类型
         /// </summary>
