@@ -85,18 +85,19 @@ namespace Beinet.Feign
 
         public virtual Exception ErrorHandle(Exception exp)
         {
-            if (exp is WebException webExp)
-            {
-                if (webExp.Response != null)
-                {
-                    using (var responseErr = (HttpWebResponse)webExp.Response)
-                    {
-                        var result = WebHelper.GetResponseString(responseErr);
-                        return new Exception(result, webExp);
-                        // return Decoding(result, errorType);
-                    }
-                }
-            }
+            // WebException可能已经被读取了，会出现流不可异常
+            // if (exp is WebException webExp)
+            // {
+            //     if (webExp.Response != null)
+            //     {
+            //         using (var responseErr = (HttpWebResponse)webExp.Response)
+            //         {
+            //             var result = WebHelper.GetResponseString(responseErr);
+            //             return new Exception(result, webExp);
+            //             // return Decoding(result, errorType);
+            //         }
+            //     }
+            // }
 
             return exp;
         }
