@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using Beinet.Repository.Entitys;
@@ -85,11 +86,31 @@ namespace Beinet.Repository.Repositories
             }
         }
 
-        private T ConvertTo(IDataReader reader)
+        private Target ConvertTo<Target>(IDataReader reader)
         {
-            var ret = Activator.CreateInstance(typeof(T));
+            var targetType = typeof(Target);
+            return (Target) ConvertTo(reader, targetType);
+        }
+
+        private object ConvertTo(IDataReader reader, Type targetType)
+        {
+            if (targetType == typeof(String))
+            {
+                return Convert.ToString(reader[0]);
+            }
+
+            if (targetType.IsValueType)
+            {
+                return Convert.ChangeType(reader[0], targetType);
+            }
+
+            var ret = Activator.CreateInstance(targetType);
+            var returnFieldNames = GetColNames(reader, true);
             foreach (var dataField in Data.Fields)
             {
+                // 返回的字段列表缺少时，这里会抛异常，所以要检查一下
+                if (!returnFieldNames.Contains(dataField.Value.Name.ToLower()))
+                    continue;
                 var value = reader[dataField.Value.Name]; // 未验证带表名时，会不会有问题
                 if (value == null || value == DBNull.Value)
                     continue;
@@ -97,8 +118,34 @@ namespace Beinet.Repository.Repositories
                 dataField.Value.Property.SetValue(ret, useVal, null);
             }
 
-            return (T) ret;
+            return ret;
         }
+
+        /// <summary>
+        /// 获取DataReader的每列列名
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="getLower">列名是否要转换小写</param>
+        /// <returns></returns>
+        public static HashSet<string> GetColNames(IDataReader reader, bool getLower = false)
+        {
+            var ret = new HashSet<string>();
+            if (reader == null) // || !reader.HasRows)
+                return ret;
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                var fieldname = reader.GetName(i) ?? "";
+                if (getLower)
+                {
+                    fieldname = fieldname.ToLower();
+                }
+
+                ret.Add(fieldname);
+            }
+
+            return ret;
+        }
+
 
         private bool IsNew(T entity)
         {
@@ -173,7 +220,7 @@ namespace Beinet.Repository.Repositories
             {
                 while (reader.Read())
                 {
-                    ret.Add(ConvertTo(reader));
+                    ret.Add(ConvertTo<T>(reader));
                 }
             }
 
@@ -212,7 +259,7 @@ namespace Beinet.Repository.Repositories
             {
                 while (reader.Read())
                 {
-                    ret.Add(ConvertTo(reader));
+                    ret.Add(ConvertTo<T>(reader));
                 }
             }
 
@@ -385,7 +432,7 @@ namespace Beinet.Repository.Repositories
                                 using (var reader = command.ExecuteReader())
                                 {
                                     reader.Read();
-                                    ret.Add(ConvertTo(reader));
+                                    ret.Add(ConvertTo<T>(reader));
                                 }
                             }
                             else
@@ -419,7 +466,7 @@ namespace Beinet.Repository.Repositories
             {
                 if (!reader.Read())
                     return default;
-                return ConvertTo(reader);
+                return ConvertTo<T>(reader);
             }
         }
 
@@ -477,12 +524,7 @@ namespace Beinet.Repository.Repositories
             if (query.ReturnType == typeof(void))
                 throw new ArgumentException("查询方法返回值不能为空:" + query.Sql);
 
-            var isSimpleType = query.ReturnType == typeof(int) ||
-                               query.ReturnType == typeof(long) ||
-                               query.ReturnType == typeof(short) ||
-                               query.ReturnType == typeof(float) ||
-                               query.ReturnType == typeof(decimal) ||
-                               query.ReturnType == typeof(DateTime) ||
+            var isSimpleType = query.ReturnType.IsValueType ||
                                query.ReturnType == typeof(string);
 
             var isArray = typeof(IEnumerable).IsAssignableFrom(query.ReturnType);
@@ -507,10 +549,10 @@ namespace Beinet.Repository.Repositories
 
                     if (!isArray)
                     {
-                        return ConvertTo(reader);
+                        return ConvertTo(reader, query.ReturnType);
                     }
 
-                    ret.Add(ConvertTo(reader));
+                    ret.Add(ConvertTo(reader, query.ReturnType.GenericTypeArguments[0]));
                 }
             }
 
