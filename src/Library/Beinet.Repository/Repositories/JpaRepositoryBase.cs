@@ -501,7 +501,7 @@ namespace Beinet.Repository.Repositories
             // https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#reference  Query支持表名占位符替换
             var sql = query.Sql.Replace("#{#entityName}", Data.TableName);
 
-            var arrPara = new IDbDataParameter[parameters.Length];
+            var arrPara = new List<IDbDataParameter>(parameters.Length);
 
             // JPA参数索引从1开始, 从高往低替换，避免把 ?12 的 ?1 替换掉了
             for (var i = parameters.Length; i >= 1; i--)
@@ -509,13 +509,28 @@ namespace Beinet.Repository.Repositories
                 var strIdx = i.ToString();
                 var symbol = "?" + i.ToString();
                 var varName = "PARA" + strIdx;
-                sql = sql.Replace(symbol, "@" + varName);
-                arrPara[i - 1] = CreatePara(varName, parameters[i - 1]);
+                var paraVal = parameters[i - 1];
+                if (!(paraVal is string) && paraVal is IEnumerable arrList)
+                {
+                    // 参数是数组，且不是字符串时，应该是in 查询，要生成n个参数
+                    var arrVarName = AddParaArray(varName, arrList, arrPara);
+                    if (arrVarName.Length <= 0)
+                    {
+                        throw new Exception("传入的数组参数长度不能为空:" + symbol);
+                    }
+
+                    sql = sql.Replace(symbol, arrVarName);
+                }
+                else
+                {
+                    sql = sql.Replace(symbol, "@" + varName);
+                    arrPara.Add(CreatePara(varName, paraVal));
+                }
             }
 
             if (query.IsModify)
             {
-                var retModiNum = ExecuteNonQuery(sql, arrPara);
+                var retModiNum = ExecuteNonQuery(sql, arrPara.ToArray());
                 if (query.ReturnType == typeof(void))
                     return null;
                 return Convert.ChangeType(retModiNum, query.ReturnType);
@@ -536,7 +551,7 @@ namespace Beinet.Repository.Repositories
                     typeof(List<>).MakeGenericType(query.ReturnType.GenericTypeArguments));
             }
 
-            using (var reader = ExecuteReader(sql, arrPara))
+            using (var reader = ExecuteReader(sql, arrPara.ToArray()))
             {
                 while (reader.Read())
                 {
@@ -563,6 +578,23 @@ namespace Beinet.Repository.Repositories
 //            }
 
             return ret;
+        }
+
+        private string AddParaArray(string varName, IEnumerable arrList, List<IDbDataParameter> arrPara)
+        {
+            var newVarName = new StringBuilder();
+            var idx = 0;
+            foreach (var subItem in arrList)
+            {
+                idx++;
+                var subItemName = varName + "_" + idx;
+                if (newVarName.Length > 0)
+                    newVarName.Append(",");
+                newVarName.Append("@").Append(subItemName);
+                arrPara.Add(CreatePara(subItemName, subItem));
+            }
+
+            return newVarName.ToString();
         }
     }
 
