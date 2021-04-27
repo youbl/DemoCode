@@ -101,9 +101,9 @@ namespace Beinet.SqlLog
         /// <summary>
         /// 执行补丁，在指定方法前后增加方法处理
         /// </summary>
-        /// <param name="original"></param>
-        /// <param name="prefix"></param>
-        /// <param name="postfix"></param>
+        /// <param name="original">要打补丁的原始方法</param>
+        /// <param name="prefix">执行原始方法前要执行的方法</param>
+        /// <param name="postfix">执行原始方法后要执行的方法</param>
         /// <param name="transpiler"></param>
         static void DoPatch(MethodBase original,
             MethodInfo prefix = null, MethodInfo postfix = null,

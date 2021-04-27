@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.Common;
 using System.Text;
 using System.Web;
@@ -7,7 +8,9 @@ using NLog;
 namespace Beinet.SqlLog
 {
     /// <summary>
-    /// 演示用Filter，用于输出每次执行的sql日志
+    /// 演示用Filter，用于输出每次执行的sql日志.
+    /// 注： connection.Open() 会依次执行如下5个SQL：
+    /// "SHOW VARIABLES"、"SHOW WARNINGS"、"SELECT TIMEDIFF(NOW(), UTC_TIMESTAMP())"、"SHOW COLLATION"、"SET character_set_results=NULL"
     /// </summary>
     public class SqlFilter : IFilter
     {
@@ -16,7 +19,6 @@ namespace Beinet.SqlLog
         /// <summary>
         /// 执行sql之前的方法，记录要执行的sql
         /// </summary>
-        /// <param name="command"></param>
         public void BeforeExecute(DbCommand command)
         {
             var cmd = GetCommand(command);
@@ -37,18 +39,24 @@ namespace Beinet.SqlLog
         }
 
         /// <summary>
-        /// 执行sql之后的方法
+        /// 执行sql之后的方法.
+        /// 注：抛异常时，不会来这里
         /// </summary>
-        /// <param name="command"></param>
-        public void AfterExecute(DbCommand command)
+        public void AfterExecute(DbCommand command, object result, long costMillis)
         {
-            return;
+            // return;
             var cmd = GetCommand(command);
             if (string.IsNullOrEmpty(cmd))
                 return;
 
             var sb = new StringBuilder();
-            sb.AppendFormat("{0} {1} 执行完成", command.GetType().Name, cmd);
+            sb.AppendFormat("{0} {1} 执行完成耗时:{2}ms", command.GetType().Name, cmd, costMillis);
+            if (result is IDataReader reader)
+            {
+                sb.AppendFormat(" 字段数:{0}", reader.FieldCount);
+                // 这里不能reader.Read, 会影响外部的操作
+            }
+
             LogInfo(sb);
         }
 
@@ -62,8 +70,7 @@ namespace Beinet.SqlLog
                 ret.Equals("COMMIT", StringComparison.OrdinalIgnoreCase))
                 return "";
             // 只记录更新语句
-            if (ret.StartsWith("select", StringComparison.OrdinalIgnoreCase) ||
-                ret.StartsWith("SHOW", StringComparison.OrdinalIgnoreCase) ||
+            if (ret.StartsWith("SHOW", StringComparison.OrdinalIgnoreCase) ||
                 ret.StartsWith("SET ", StringComparison.OrdinalIgnoreCase))
                 return "";
             return ret;
