@@ -206,6 +206,35 @@ namespace Beinet.Repository.Repositories
         #endregion
 
 
+        #region SQL方法集
+
+        public List<T> Query(string sql, params IDbDataParameter[] parameters)
+        {
+            var ret = new List<T>();
+            using (var reader = ExecuteReader(sql, parameters))
+            {
+                while (reader.Read())
+                {
+                    ret.Add(ConvertTo<T>(reader));
+                }
+            }
+
+            return ret;
+        }
+
+        public T QueryFirst(string sql, params IDbDataParameter[] parameters)
+        {
+            using (var reader = ExecuteReader(sql, parameters))
+            {
+                if (!reader.Read())
+                    return default;
+                return ConvertTo<T>(reader);
+            }
+        }
+
+        #endregion
+
+
         #region Jpa基础方法集
 
         /// <summary>
@@ -215,16 +244,7 @@ namespace Beinet.Repository.Repositories
         public List<T> FindAll()
         {
             var sql = Data.SelectSql;
-            var ret = new List<T>();
-            using (var reader = ExecuteReader(sql))
-            {
-                while (reader.Read())
-                {
-                    ret.Add(ConvertTo<T>(reader));
-                }
-            }
-
-            return ret;
+            return Query(sql);
         }
 
         /// <summary>
@@ -254,16 +274,7 @@ namespace Beinet.Repository.Repositories
 
             sql.Remove(sql.Length - 1, 1);
             sql.Append(")");
-            var ret = new List<T>();
-            using (var reader = ExecuteReader(sql.ToString(), arrParam.ToArray()))
-            {
-                while (reader.Read())
-                {
-                    ret.Add(ConvertTo<T>(reader));
-                }
-            }
-
-            return ret;
+            return Query(sql.ToString(), arrParam.ToArray());
         }
 
         /// <summary>
@@ -462,12 +473,7 @@ namespace Beinet.Repository.Repositories
         {
             var existSql = $"{Data.SelectSql} WHERE {Data.KeyName}=@id";
             var para = CreatePara("id", aID);
-            using (var reader = ExecuteReader(existSql, para))
-            {
-                if (!reader.Read())
-                    return default;
-                return ConvertTo<T>(reader);
-            }
+            return QueryFirst(existSql, para);
         }
 
         /// <summary>
