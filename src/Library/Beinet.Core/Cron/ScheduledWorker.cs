@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using Beinet.Core.Reflection;
 
@@ -38,19 +39,31 @@ namespace Beinet.Core.Cron
             Info("Begin search scheduled method...");
             var allMethod = ScanAllAssembly();
             var cnt = allMethod.Count;
-            Info($"End search scheduled method, count: {cnt.ToString()}.");
+            LogLoadedMethod(allMethod);
 
             if (cnt > 0)
             {
-//                foreach (var item in allMethod)
-//                {
-//                    Info(item.Scheduled.Cron);
-//                }
+                // 没有任务，就不要创建Timer了
                 _timer = new Timer(ScheduledRun, allMethod, 0, 1000);
                 Info($"Timer inited ok: {_timer}");
             }
 
             return cnt;
+        }
+
+        static void LogLoadedMethod(List<ScheduledMethod> scheduledTasks)
+        {
+            var sb = new StringBuilder("End search scheduled method, count: ");
+            sb.Append(scheduledTasks.Count);
+            foreach (var task in scheduledTasks)
+            {
+                sb.Append("\r\n")
+                    .Append(task.Method.Name)
+                    .Append(":")
+                    .Append(task.Scheduled.Cron);
+            }
+
+            Info(sb.ToString());
         }
 
         /// <summary>
@@ -121,15 +134,18 @@ namespace Beinet.Core.Cron
             {
                 if (method.Scheduled.IsRunTime(now))
                 {
+                    var methodName = method.Method.Name;
+                    Info($"Scheduled task started:{methodName}:{method.Scheduled.Cron}");
                     ThreadPool.UnsafeQueueUserWorkItem(state2 =>
                     {
                         try
                         {
                             method.Run();
+                            Info($"Scheduled task ended:{methodName}");
                         }
                         catch (Exception exp)
                         {
-                            var msg = $"method:{method.Method.Name}: {exp}";
+                            var msg = $"Scheduled task error:{methodName}: {exp}";
                             Error(msg);
                         }
                     }, null);
@@ -146,10 +162,12 @@ namespace Beinet.Core.Cron
             /// 定时任务要执行的方法
             /// </summary>
             public MethodInfo Method { get; set; }
+
             /// <summary>
             /// 方法为非静态时，所依附的对象
             /// </summary>
             public object MethodObj { get; set; }
+
             /// <summary>
             /// 定时任务配置
             /// </summary>
@@ -175,14 +193,15 @@ namespace Beinet.Core.Cron
         {
             if (_infoMethod == null)
                 return;
-            _infoMethod.Invoke(_logger, new object[] { ExtendMsg(msg) });
+            _infoMethod.Invoke(_logger, new object[] {ExtendMsg(msg)});
         }
+
         // 记录Error日志
         private static void Error(string msg)
         {
             if (_errorMethod == null)
                 return;
-            _errorMethod.Invoke(_logger, new object[] { ExtendMsg(msg) });
+            _errorMethod.Invoke(_logger, new object[] {ExtendMsg(msg)});
         }
 
         private static string ExtendMsg(string msg)
@@ -211,17 +230,18 @@ namespace Beinet.Core.Cron
                     return;
                 }
 
-                var method = logManagerType.GetMethod("GetCurrentClassLogger", new Type[] { typeof(Type) });
+                var method = logManagerType.GetMethod("GetCurrentClassLogger", new Type[] {typeof(Type)});
                 if (method == null)
                 {
                     return;
                 }
 
-                _logger = method.Invoke(null, new object[] { typeof(ScheduledWorker) });
+                _logger = method.Invoke(null, new object[] {typeof(ScheduledWorker)});
                 if (_logger == null)
                 {
                     return;
                 }
+
                 var type = _logger.GetType();
                 foreach (var info in type.GetMethods())
                 {
@@ -229,6 +249,7 @@ namespace Beinet.Core.Cron
                     {
                         continue;
                     }
+
                     if (info.Name == "Info")
                     {
                         // 直接用 _infoMethod = info; 会报错： 不能对ContainsGenericParameters为true的类型或方法执行后期绑定操作
