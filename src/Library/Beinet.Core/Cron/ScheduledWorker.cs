@@ -58,7 +58,7 @@ namespace Beinet.Core.Cron
             foreach (var task in scheduledTasks)
             {
                 sb.Append("\r\n")
-                    .Append(task.Method.Name)
+                    .Append(task.MethodName)
                     .Append(":")
                     .Append(task.Scheduled.Cron);
             }
@@ -134,7 +134,7 @@ namespace Beinet.Core.Cron
             {
                 if (method.Scheduled.IsRunTime(now))
                 {
-                    var methodName = method.Method.Name;
+                    var methodName = method.MethodName;
                     Info($"Scheduled task started:{methodName}:{method.Scheduled.Cron}");
                     ThreadPool.UnsafeQueueUserWorkItem(state2 =>
                     {
@@ -179,6 +179,16 @@ namespace Beinet.Core.Cron
             public void Run()
             {
                 Method.Invoke(MethodObj, null);
+            }
+
+            public string MethodName
+            {
+                get
+                {
+                    if (Method == null)
+                        return "";
+                    return Method.ReflectedType?.Name + '.' + Method.Name;
+                }
             }
         }
 
