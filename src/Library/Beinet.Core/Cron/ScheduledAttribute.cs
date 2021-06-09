@@ -24,10 +24,16 @@ namespace Beinet.Core.Cron
                 _cron = value;
             }
         }
+
         /// <summary>
         /// 是否允许启动
         /// </summary>
         public bool Run { get; set; } = true;
+
+        /// <summary>
+        /// 是否记录启动结束日志
+        /// </summary>
+        public bool StartLog { get; set; } = false;
 
         /// <summary>
         /// 可执行的秒集合
@@ -84,6 +90,7 @@ namespace Beinet.Core.Cron
             {
                 return false;
             }
+
             if (Years != null && Years.Count > 0 && !Years.Contains(time.Year))
             {
                 return false;
@@ -94,7 +101,7 @@ namespace Beinet.Core.Cron
                    Hours.Contains(time.Hour) &&
                    Days.Contains(time.Day) &&
                    Months.Contains(time.Month) &&
-                   Weeks.Contains((int)time.DayOfWeek);
+                   Weeks.Contains((int) time.DayOfWeek);
         }
 
         #region 私有方法集
@@ -111,7 +118,7 @@ namespace Beinet.Core.Cron
                 throw new ArgumentException("cron can't be empty.");
             }
 
-            var arr = cron.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var arr = cron.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
             if (arr.Length != 6 && arr.Length != 7)
             {
                 throw new ArgumentException($"cron must have 6 or 7 items: {cron}");
@@ -133,22 +140,27 @@ namespace Beinet.Core.Cron
         {
             return ParseValues(itemStr, 0, 59);
         }
+
         private static HashSet<int> ParseMinute(string itemStr)
         {
             return ParseValues(itemStr, 0, 59);
         }
+
         private static HashSet<int> ParseHour(string itemStr)
         {
             return ParseValues(itemStr, 0, 23);
         }
+
         private static HashSet<int> ParseDay(string itemStr)
         {
             return ParseValues(itemStr, 1, 31);
         }
+
         private static HashSet<int> ParseMonth(string itemStr)
         {
             return ParseValues(itemStr, 1, 12);
         }
+
         private static HashSet<int> ParseWeek(string itemStr)
         {
             var ret = ParseValues(itemStr, 0, 7);
@@ -161,11 +173,11 @@ namespace Beinet.Core.Cron
 
             return ret;
         }
+
         private static HashSet<int> ParseYear(string itemStr)
         {
             return ParseValues(itemStr, 1970, 2099);
         }
-
 
 
         /*
@@ -180,8 +192,10 @@ namespace Beinet.Core.Cron
 */
         // 秒、分、时、月、年的正则
         static readonly Regex _regexSMHmY = new Regex(@"^[,\-*/\d]+$");
+
         // */6 这种间隔表达式
         static readonly Regex _regexDivided = new Regex(@"^\*(/\d+)?$");
+
         // 3-30/5 这种区间表达式
         static readonly Regex _regexRange = new Regex(@"^\d+\-\d+(/\d+)?$");
 
@@ -198,6 +212,7 @@ namespace Beinet.Core.Cron
             {
                 throw new ArgumentException($"cron format error: {itemStr}");
             }
+
             var ret = new HashSet<int>();
             foreach (var item in itemStr.Split(','))
             {
@@ -205,23 +220,28 @@ namespace Beinet.Core.Cron
                 {
                     throw new ArgumentException($"cron format error: {itemStr}, can't have two comma.");
                 }
+
                 if (int.TryParse(item, out var itemNum))
                 {
                     ret.Add(itemNum);
                     continue;
                 }
+
                 if (_regexDivided.IsMatch(item))
                 {
                     AddDividedVal(item, minVal, maxVal, ret);
                     continue;
                 }
+
                 if (_regexRange.IsMatch(item))
                 {
                     AddRangedVal(item, minVal, maxVal, ret);
                     continue;
                 }
+
                 throw new ArgumentException($"cron format error: {itemStr}, unrecognized item: {item}");
             }
+
             return ret;
         }
 

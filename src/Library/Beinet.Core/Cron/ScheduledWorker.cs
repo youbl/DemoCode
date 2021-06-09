@@ -135,13 +135,20 @@ namespace Beinet.Core.Cron
                 if (method.Scheduled.IsRunTime(now))
                 {
                     var methodName = method.MethodName;
-                    Info($"Scheduled task started:{methodName}:{method.Scheduled.Cron}");
+                    if (method.Scheduled.StartLog)
+                    {
+                        Info($"Scheduled task started:{methodName}:{method.Scheduled.Cron}");
+                    }
+
                     ThreadPool.UnsafeQueueUserWorkItem(state2 =>
                     {
                         try
                         {
                             method.Run();
-                            Info($"Scheduled task ended:{methodName}");
+                            if (method.Scheduled.StartLog)
+                            {
+                                Info($"Scheduled task ended:{methodName}");
+                            }
                         }
                         catch (Exception exp)
                         {
