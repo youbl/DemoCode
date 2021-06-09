@@ -86,6 +86,11 @@ namespace Beinet.Repository.Tools
 
             foreach (var property in properties)
             {
+                if (IsNotField(property))
+                {
+                    continue;
+                }
+
                 var propName = property.Name;
                 var colName = propName;
                 var colAtt = property.GetCustomAttribute<ColumnAttribute>() ?? new ColumnAttribute();
@@ -327,6 +332,12 @@ namespace Beinet.Repository.Tools
                 ReturnType = method.ReturnType,
             };
             return ret;
+        }
+
+        private bool IsNotField(PropertyInfo property)
+        {
+            var colAtt = property.GetCustomAttribute<TransientAttribute>();
+            return colAtt != null;
         }
     }
 }
