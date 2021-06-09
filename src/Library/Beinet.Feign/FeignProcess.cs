@@ -35,7 +35,6 @@ namespace Beinet.Feign
 
         #region 成员属性
 
-        
         private string _url;
 
         /// <summary>
@@ -138,7 +137,11 @@ namespace Beinet.Feign
             // 拼接url和路由
             var url = paraUri == null ? Url : paraUri.ToString();
             url = CombineUrl(url, methodAtt.Route);
-            // 用配置和参数替换url里的内容
+
+            // 处理url和路由里的配置，不做UrlEncode
+            url = ReplaceHolder(url, args, false);
+
+            // 拼接url参数，并用配置和参数替换url里的内容，要做UrlEncode
             url = ParseUrl(url, args);
 
             var headers = CombineHeaders(methodAtt.Headers, args);
@@ -155,7 +158,7 @@ namespace Beinet.Feign
                 var ret = Config.Decoding(httpReturn, returnType);
                 if (ret == null)
                 {
-                    if(returnType.IsValueType)
+                    if (returnType.IsValueType)
                         return TypeHelper.GetDefaultValue(returnType);
                     return null;
                 }
@@ -183,7 +186,8 @@ namespace Beinet.Feign
         /// <param name="paraUri">参数列表里指定的请求Uri，不一定存在</param>
         /// <param name="returnType">参数列表里指定的响应值类型，不一定存在</param>
         /// <param name="bodyArg">参数列表里指定的Post参数，不一定存在</param>
-        static void GetUriAndBody(Dictionary<string, ArgumentItem> args, ref Uri paraUri, ref Type returnType, ref object bodyArg)
+        static void GetUriAndBody(Dictionary<string, ArgumentItem> args, ref Uri paraUri, ref Type returnType,
+            ref object bodyArg)
         {
             foreach (var argumentItem in args.Values)
             {
@@ -225,7 +229,7 @@ namespace Beinet.Feign
             if (string.IsNullOrEmpty(url))
                 throw new ArgumentException("url不允许为空");
 
-            url = ReplaceHolder(url, args);
+            url = ReplaceHolder(url, args, true);
 
             // 拼接列表里的查询参数
             if (args != null && args.Count > 0)
@@ -245,8 +249,9 @@ namespace Beinet.Feign
         /// </summary>
         /// <param name="url"></param>
         /// <param name="args"></param>
+        /// <param name="encode">是否要UrlEncode</param>
         /// <returns></returns>
-        static string ReplaceHolder(string url, Dictionary<string, ArgumentItem> args)
+        static string ReplaceHolder(string url, Dictionary<string, ArgumentItem> args, bool encode)
         {
             int idx = -1;
             do
@@ -274,7 +279,7 @@ namespace Beinet.Feign
                     throw new Exception($"占位符{{{argName}}}在参数列表或配置文件中，均不存在");
                 }
 
-                url = url.Replace("{" + argName + "}", ConvertToUriPara(val));
+                url = url.Replace("{" + argName + "}", ConvertToUriPara(val, encode));
             } while (true);
 
             return url;
@@ -305,10 +310,11 @@ namespace Beinet.Feign
         /// 把指定的参数，转换为Url上可用的字符串
         /// </summary>
         /// <param name="val">参数</param>
+        /// <param name="urlEncode">是否要urlEncode</param>
         /// <returns>字符串</returns>
-        static string ConvertToUriPara(object val)
+        static string ConvertToUriPara(object val, bool urlEncode)
         {
-            if (val is System.Collections.IEnumerable data)
+            if (!(val is string) && val is System.Collections.IEnumerable data)
             {
                 var enumerator = data.GetEnumerator();
                 StringBuilder sbBuilder = new StringBuilder();
@@ -322,7 +328,12 @@ namespace Beinet.Feign
                 val = sbBuilder.ToString();
             }
 
-            return HttpUtility.UrlEncode(Convert.ToString(val));
+            if (urlEncode)
+            {
+                return HttpUtility.UrlEncode(Convert.ToString(val));
+            }
+
+            return Convert.ToString(val);
         }
 
         void Log(LogMessageGenerator messageFunc)
@@ -337,7 +348,7 @@ namespace Beinet.Feign
             if (WebHelper.IsUrl(route))
                 return route;
 
-            if (route.Length <=0 || route[0] != '/')
+            if (route.Length <= 0 || route[0] != '/')
                 route = '/' + route;
             if (url.Length > 0 && url[url.Length - 1] == '/')
                 url = url.Substring(0, url.Length - 1);
@@ -381,7 +392,8 @@ namespace Beinet.Feign
             return ret;
         }
 
-        static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
+        static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain,
+            SslPolicyErrors errors)
         {
             // Always accept
             //Console.WriteLine("accept" + certificate.GetName());
