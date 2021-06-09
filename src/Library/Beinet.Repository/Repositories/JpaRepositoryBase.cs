@@ -542,6 +542,8 @@ namespace Beinet.Repository.Repositories
                 return Convert.ChangeType(retModiNum, query.ReturnType);
             }
 
+            CheckIsModifySql(sql);
+
             if (query.ReturnType == typeof(void))
                 throw new ArgumentException("查询方法返回值不能为空:" + query.Sql);
 
@@ -582,8 +584,23 @@ namespace Beinet.Repository.Repositories
 //            {
 //                 return ret.ToArray();
 //            }
+            if (ret == null && query.ReturnType.IsValueType)
+            {
+                return Activator.CreateInstance(query.ReturnType);
+            }
 
             return ret;
+        }
+
+        private void CheckIsModifySql(string sql)
+        {
+            sql = sql.Trim();
+            if (sql.IndexOf("insert", StringComparison.OrdinalIgnoreCase) == 0
+                || sql.IndexOf("update", StringComparison.OrdinalIgnoreCase) == 0
+                || sql.IndexOf("delete", StringComparison.OrdinalIgnoreCase) == 0)
+            {
+                throw new ArgumentException("更新方法必须指定:" + nameof(ModifingAttribute));
+            }
         }
 
         private string AddParaArray(string varName, IEnumerable arrList, List<IDbDataParameter> arrPara)
