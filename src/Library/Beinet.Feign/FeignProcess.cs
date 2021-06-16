@@ -46,7 +46,7 @@ namespace Beinet.Feign
             set
             {
                 _url = value;
-                ParseUrl();
+                //ParseUrl();
             }
         }
 
@@ -66,7 +66,7 @@ namespace Beinet.Feign
 
                 var tmp = Url;
 
-                ParseUrl();
+                //ParseUrl();
 
                 if (tmp != Url)
                     Log(() => tmp + "=>" + Url);
@@ -135,6 +135,8 @@ namespace Beinet.Feign
             }
 
             // 拼接url和路由
+            ParseUrl();
+
             var url = paraUri == null ? Url : paraUri.ToString();
             url = CombineUrl(url, methodAtt.Route);
 
