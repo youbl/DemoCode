@@ -85,15 +85,18 @@ namespace Beinet.Feign
         #endregion
 
 
-        private void ParseUrl()
+        private string ParseUrl()
         {
-            if (Interceptors != null && !string.IsNullOrEmpty(_url))
+            var url = _url;
+            if (Interceptors != null && !string.IsNullOrEmpty(url))
             {
                 foreach (var interceptor in Interceptors)
                 {
-                    _url = interceptor.OnCreate(_url);
+                    url = interceptor.OnCreate(url);
                 }
             }
+
+            return url;
         }
 
 
@@ -135,9 +138,7 @@ namespace Beinet.Feign
             }
 
             // 拼接url和路由
-            ParseUrl();
-
-            var url = paraUri == null ? Url : paraUri.ToString();
+            var url = paraUri == null ? ParseUrl() : paraUri.ToString();
             url = CombineUrl(url, methodAtt.Route);
 
             // 处理url和路由里的配置，不做UrlEncode
