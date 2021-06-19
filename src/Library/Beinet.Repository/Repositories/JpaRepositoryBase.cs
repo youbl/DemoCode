@@ -196,7 +196,8 @@ namespace Beinet.Repository.Repositories
             var i = 0;
             foreach (var pair in Data.Fields)
             {
-                parameters[i] = CreatePara(pair.Key, pair.Value.Property.GetValue(entity, null));
+                var paraVal = pair.Value.Property.GetValue(entity, null) ?? "";
+                parameters[i] = CreatePara(pair.Key, paraVal);
                 i++;
             }
 
