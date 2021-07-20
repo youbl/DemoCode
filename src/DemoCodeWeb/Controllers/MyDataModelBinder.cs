@@ -24,6 +24,10 @@ namespace DemoCodeWeb.Controllers
         }
     }
 
+    /// <summary>
+    /// 直接注解在对象类定义上
+    /// </summary>
+    [ModelBinder(typeof(MyDataModelBinder))]
     public class MyData
     {
         public string Agent { get; set; }

@@ -20,8 +20,7 @@ namespace DemoCodeWeb.Controllers
         }
 
         [Route("ccc")]
-        public string Get3([ModelBinder(typeof(MyDataModelBinder))]
-            MyData data)
+        public string Get3(MyData data)
         {
             if (data == null)
                 return "空的";
