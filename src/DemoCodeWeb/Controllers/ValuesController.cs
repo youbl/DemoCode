@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+﻿using System.Collections.Generic;
 using System.Web.Http;
 
 namespace DemoCodeWeb.Controllers
@@ -10,9 +6,15 @@ namespace DemoCodeWeb.Controllers
     public class ValuesController : ApiController
     {
         // GET api/<controller>
+        [Route("aaa")]
         public IEnumerable<string> Get()
         {
             return new string[] { "value1", "value2" };
+        }
+        [Route("bbb")]
+        public IEnumerable<string> Get2()
+        {
+            return new string[] { "value11", "value22" };
         }
 
         // GET api/<controller>/5

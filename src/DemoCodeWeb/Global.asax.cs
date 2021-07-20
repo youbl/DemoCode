@@ -6,11 +6,14 @@ using System.Threading;
 using System.Web;
 using System.Web.Http;
 using Beinet.Core.Logging;
+using NLog;
 
 namespace DemoCodeWeb
 {
     public class WebApiApplication : System.Web.HttpApplication
     {
+        private static readonly ILogger logger = LogManager.GetCurrentClassLogger();
+
         #region Global里的标准事件
 
         protected void Application_Start()
@@ -18,7 +21,7 @@ namespace DemoCodeWeb
             // 启动时记录日志
             var idmsg = "当前进程/线程ID：" + Process.GetCurrentProcess().Id.ToString() + "/" +
                         Thread.CurrentThread.ManagedThreadId.ToString();
-            LoggerDefault.Default.Custom("AppStartEnd\\", "App_Start Begin\r\n  " + idmsg);
+            logger.Info("App_Start Begin\r\n  " + idmsg);
 
             GlobalConfiguration.Configure(WebApiConfig.Register);
             // GlobalConfiguration.Configuration.MessageHandlers.Add(null);
@@ -39,7 +42,7 @@ namespace DemoCodeWeb
             // 初始化完成记录日志
             ThreadPool.GetMinThreads(out var minworkthreads, out var miniocpthreads);
             idmsg += "最小工作线程数/IO线程数:" + minworkthreads.ToString() + "/" + miniocpthreads.ToString();
-            LoggerDefault.Default.Custom("AppStartEnd\\", "App_Start End\r\n  " + idmsg);
+            logger.Info("App_Start End\r\n  " + idmsg);
         }
 
 
@@ -50,18 +53,18 @@ namespace DemoCodeWeb
         {
             // 程序池停止日志，并收集停止原因
             string message = string.Empty;
-            HttpRuntime runtime = (HttpRuntime)typeof(HttpRuntime).InvokeMember("_theRuntime",
+            HttpRuntime runtime = (HttpRuntime) typeof(HttpRuntime).InvokeMember("_theRuntime",
                 BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.GetField, null, null, null);
             if (runtime != null)
             {
                 Type type = runtime.GetType();
                 BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.GetField;
-                string shutDownMessage = (string)type.InvokeMember("_shutDownMessage", flags, null, runtime, null);
-                string shutDownStack = (string)type.InvokeMember("_shutDownStack", flags, null, runtime, null);
+                string shutDownMessage = (string) type.InvokeMember("_shutDownMessage", flags, null, runtime, null);
+                string shutDownStack = (string) type.InvokeMember("_shutDownStack", flags, null, runtime, null);
                 message = $"\r\nshutDownMessage:{shutDownMessage}\r\nshutDownStack:\r\n:{shutDownStack}";
             }
-            LoggerDefault.Default.Custom("AppStartEnd\\",
-                "Application_End " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + message);
+
+            logger.InfoExt("Application_End " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + message);
         }
 
         /// <summary>
@@ -90,10 +93,10 @@ namespace DemoCodeWeb
             double usingTime = (now - HttpContext.Current.Timestamp).TotalMilliseconds;
             if (usingTime > 1000 && now.Hour != 5)
             {
-                string time2 = $@"End:{now.ToString("HH:mm:ss.fff")} 
+                string time2 = $@"EndRequest:{now.ToString("HH:mm:ss.fff")} 
 use time:{usingTime.ToString("N0")}ms, Post len:{Convert.ToString(Request.Form).Length.ToString()}
 ";
-                LoggerDefault.Default.Custom("All\\LongTime", time2);
+                logger.InfoExt(time2);
             }
 
             #endregion
@@ -134,24 +137,27 @@ use time:{usingTime.ToString("N0")}ms, Post len:{Convert.ToString(Request.Form).
                 HttpContext.Current.ClearError();
                 return;
             }
+
             if (ex is HttpException exp404)
             {
                 int erCode = exp404.GetHttpCode();
                 if (erCode == 404 || erCode == 400)
                 {
-                    LoggerDefault.Default.Custom("err\\" + erCode.ToString(), ex.Message);
+                    logger.ErrorExt(erCode.ToString() + " " + ex.Message);
                     ClearErr();
                     return;
                 }
             }
+
             string msg = $"\r\nGlobal异常: Post数据:{Request.Form}\r\n";
             if (ex is HttpRequestValidationException)
             {
-                LoggerDefault.Default.Custom("err\\Validation", msg);
+                logger.ErrorExt(msg);
                 ClearErr();
                 return;
             }
-            LoggerDefault.Default.Error(msg + ex);
+
+            logger.ErrorExt(msg + ex);
             ClearErr();
         }
 
@@ -175,6 +181,7 @@ use time:{usingTime.ToString("N0")}ms, Post len:{Convert.ToString(Request.Form).
             }
 #endif
         }
+
         private void DisponseContextData()
         {
             try
@@ -198,9 +205,8 @@ use time:{usingTime.ToString("N0")}ms, Post len:{Convert.ToString(Request.Form).
             }
             catch (Exception exp)
             {
-                LoggerDefault.Default.Error("释放异常:" + exp);
+                logger.ErrorExt("释放异常:" + exp);
             }
         }
-
     }
 }
