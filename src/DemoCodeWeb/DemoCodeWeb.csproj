@@ -92,6 +92,7 @@
     <Compile Include="App_Start\JsonLongToString.cs" />
     <Compile Include="App_Start\JsonpMediaTypeFormatter.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Controllers\MyDataModelBinder.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
