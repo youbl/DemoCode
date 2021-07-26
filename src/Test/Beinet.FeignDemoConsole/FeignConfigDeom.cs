@@ -54,7 +54,7 @@ namespace Beinet.FeignDemoConsole
         }
 
         // 在HttpWebRequest.GetResponse之前执行的方法，比如记录日志，添加统一header
-        public void BeforeRequest(HttpWebRequest request)
+        public void BeforeRequest(HttpWebRequest request, string postStr)
         {
             request.Headers.Add("aaa", "bbb");
             request.UserAgent = "bbbbb";
@@ -62,15 +62,17 @@ namespace Beinet.FeignDemoConsole
 
             Console.WriteLine(request.Method + " " + request.RequestUri);
             Console.WriteLine(request.Headers);
+            Console.WriteLine(postStr);
 
             _beginTime = DateTime.Now;
         }
 
         // 在HttpWebRequest.GetResponse之后执行的方法，比如记录日志
-        public void AfterRequest(HttpWebRequest request, HttpWebResponse response, Exception exp)
+        public void AfterRequest(HttpWebRequest request, HttpWebResponse response, string responseStr, Exception exp)
         {
             var costTime = (DateTime.Now - _beginTime).TotalMilliseconds.ToString("N0");
             Console.WriteLine($"{request.RequestUri} 耗时:{costTime}毫秒");
+            Console.WriteLine($"响应内容: {responseStr}");
             if (response != null)
                 Console.WriteLine(((int)response.StatusCode).ToString() + ":" + response.Headers);
             else if (exp != null)

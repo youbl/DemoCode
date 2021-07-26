@@ -5,9 +5,10 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Beinet.Core.FileExt;
 using Beinet.Core.Logging;
 using Beinet.Core.Serializer;
-using Beinet.Core.Util;
+using NLog;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -20,6 +21,8 @@ namespace Beinet.MQ
     /// </summary>
     public class RabbitMQPool : IDisposable
     {
+        private static readonly ILogger logger = LogManager.GetCurrentClassLogger();
+
         private static readonly Encoding Utf8 = FileHelper.UTF8_NoBom;
         /// <summary>
         /// 根据服务器信息，存储所有的连接池，避免同一服务器创建多个连接
@@ -421,7 +424,7 @@ namespace Beinet.MQ
                     prop.Headers = nheaders;
                     channel.BasicPublish(exchange, routingKey ?? string.Empty, prop, byteMessage);
                     channel.WaitForConfirmsOrDie(); // 发送失败会抛出异常
-                    NLogHelper.Default.Debug($"Event Trigger.ExchangeName:{exchange},RoutingKey:{routingKey ?? string.Empty},Message:{Utf8.GetString(byteMessage)},Headers:{_defaultSerial.SerializToStr(headers)},DeliveryMode:{deliveryMode}");
+                    logger.DebugExt($"Event Trigger.ExchangeName:{exchange},RoutingKey:{routingKey ?? string.Empty},Message:{Utf8.GetString(byteMessage)},Headers:{_defaultSerial.SerializToStr(headers)},DeliveryMode:{deliveryMode}");
                 }
             }
             // 发布消息重试1次
@@ -664,7 +667,7 @@ namespace Beinet.MQ
                             }
                             finally
                             {
-                                NLogHelper.Default.Debug($"Event Received. Queue:{queue},Message:{Utf8.GetString(e.Body)}");
+                                logger.DebugExt($"Event Received. Queue:{queue},Message:{Utf8.GetString(e.Body)}");
                             }
                         }
                     }
@@ -748,7 +751,7 @@ namespace Beinet.MQ
                             }
                             finally
                             {
-                                NLogHelper.Default.Debug($"Event Received. Queue:{queue},Message:{Utf8.GetString(e.Body)}");
+                                logger.DebugExt($"Event Received. Queue:{queue},Message:{Utf8.GetString(e.Body)}");
                             }
                         }
                     }
