@@ -96,6 +96,7 @@
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Start\ActuatorInfoRouteHandler.cs" />
     <Compile Include="App_Start\JsonLongToString.cs" />
     <Compile Include="App_Start\JsonpMediaTypeFormatter.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
