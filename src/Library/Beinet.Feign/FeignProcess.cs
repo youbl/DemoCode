@@ -348,10 +348,13 @@ namespace Beinet.Feign
         static string CombineUrl(string url, string route)
         {
             route = route ?? "";
+            if (route.Length <= 0)
+                return url;
+
             if (WebHelper.IsUrl(route))
                 return route;
 
-            if (route.Length <= 0 || route[0] != '/')
+            if (route[0] != '/')
                 route = '/' + route;
             if (url.Length > 0 && url[url.Length - 1] == '/')
                 url = url.Substring(0, url.Length - 1);
