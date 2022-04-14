@@ -13,35 +13,34 @@ namespace DemoCodeConsole.MQBaseDemo
     {
         public void Run()
         {
-            // 创建生产者
-            var producer = Producer.DEFAULT;
             // 从当前组件中查找消费者进行注册
-            producer.Register();
+            Producer.StartAllConsumer();
 
             Console.WriteLine($"\r\n主线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
 
             // 测试发消息
             var data = new DataDemo { Xxx = "haha" };
-            producer.Publish("aaa", 111, data, DateTime.Now);
+            Producer.PublishMsg("aaa", 111, data, DateTime.Now);
 
             // 用线程发3条消息
             new Thread(() => {
                 Console.WriteLine($"\r\nddd1线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                producer.Publish("ddd1");
+                Producer.PublishMsg("ddd1");
             }).Start();
             new Thread(() => {
                 Console.WriteLine($"\r\nddd2线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                producer.Publish("ddd2");
+                Producer.PublishMsg("ddd2");
             }).Start();
             new Thread(() => {
+                Thread.Sleep(2000);
                 Console.WriteLine($"\r\nddd3线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                producer.Publish("ddd3");
+                Producer.PublishMsg("ddd3");
             }).Start();
 
             // 等10秒释放生产者
             new Thread(() => {
                 Thread.Sleep(10000);
-                producer.Dispose();
+                Producer.Close();
             }).Start();
         }
     }

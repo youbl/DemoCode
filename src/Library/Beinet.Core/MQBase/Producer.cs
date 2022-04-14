@@ -54,6 +54,20 @@ namespace Beinet.Core.MQBase
             Task.Factory.StartNew(WaitForDelivery);
         }
 
+        public static void StartAllConsumer()
+        {
+            DEFAULT.Register();
+        }
+
+        public static void PublishMsg(params object[] msgs)
+        {
+            DEFAULT.Publish(msgs);
+        }
+
+        public static void Close()
+        {
+            DEFAULT.Dispose();
+        }
 
         /// <summary>
         /// 生产消息入队
