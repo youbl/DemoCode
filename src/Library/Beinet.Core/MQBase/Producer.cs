@@ -54,21 +54,6 @@ namespace Beinet.Core.MQBase
             Task.Factory.StartNew(WaitForDelivery);
         }
 
-        public static void StartAllConsumer()
-        {
-            DEFAULT.Register();
-        }
-
-        public static void PublishMsg(params object[] msgs)
-        {
-            DEFAULT.Publish(msgs);
-        }
-
-        public static void Close()
-        {
-            DEFAULT.Dispose();
-        }
-
         /// <summary>
         /// 生产消息入队
         /// </summary>
@@ -246,7 +231,7 @@ namespace Beinet.Core.MQBase
         /// 从指定组件里查找 实现消费者接口的类进行注册和实例化
         /// </summary>
         /// <param name="ass"></param>
-        protected void RegisterAssembly(Assembly ass)
+        internal void RegisterAssembly(Assembly ass)
         {
             var types = ass.GetTypes();
             var constructParams = new Type[] { };
@@ -266,9 +251,16 @@ namespace Beinet.Core.MQBase
             {
                 Type genericParaType = consumer.GetType().GetInterfaces().FirstOrDefault(tp =>
                     tp.IsGenericType && tp.GetGenericTypeDefinition() == consumerTType);
-                if (genericParaType != null)
+                if (genericParaType == null)
                 {
-                    RegisterType(genericParaType, consumer);
+                    Register(consumer);
+                    continue;
+                }
+
+                var genericArgs = genericParaType.GetGenericArguments();
+                if (genericArgs.Length > 0)
+                {
+                    RegisterType(genericArgs[0], consumer);
                 }
                 else
                 {

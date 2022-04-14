@@ -59,6 +59,7 @@
     <Compile Include="Env.cs" />
     <Compile Include="FileExt\FileHelper.cs" />
     <Compile Include="Logging\LogHelper.cs" />
+    <Compile Include="MQBase\Publisher.cs" />
     <Compile Include="NumberExt\NumHelper.cs" />
     <Compile Include="RetryHelper.cs" />
     <Compile Include="IRunable.cs" />

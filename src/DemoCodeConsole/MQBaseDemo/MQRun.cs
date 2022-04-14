@@ -14,33 +14,33 @@ namespace DemoCodeConsole.MQBaseDemo
         public void Run()
         {
             // 从当前组件中查找消费者进行注册
-            Producer.StartAllConsumer();
+            Publisher.StartAllConsumer();
 
             Console.WriteLine($"\r\n主线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
 
             // 测试发消息
             var data = new DataDemo { Xxx = "haha" };
-            Producer.PublishMsg("aaa", 111, data, DateTime.Now);
+            Publisher.Publish(data, DateTime.Now);
 
-            // 用线程发3条消息
-            new Thread(() => {
-                Console.WriteLine($"\r\nddd1线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                Producer.PublishMsg("ddd1");
-            }).Start();
+            // // 用线程发3条消息
+            // new Thread(() => {
+            //     Console.WriteLine($"\r\nddd1线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
+            //     Publisher.Publish("ddd1");
+            // }).Start();
             new Thread(() => {
                 Console.WriteLine($"\r\nddd2线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                Producer.PublishMsg("ddd2");
+                Publisher.Publish("ddd2", data);
             }).Start();
-            new Thread(() => {
-                Thread.Sleep(2000);
-                Console.WriteLine($"\r\nddd3线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
-                Producer.PublishMsg("ddd3");
-            }).Start();
+            // new Thread(() => {
+            //     Thread.Sleep(2000);
+            //     Console.WriteLine($"\r\nddd3线程ID:{Thread.CurrentThread.ManagedThreadId}\r\n");
+            //     Publisher.Publish("ddd3");
+            // }).Start();
 
             // 等10秒释放生产者
             new Thread(() => {
                 Thread.Sleep(10000);
-                Producer.Close();
+                Publisher.Dispose();
             }).Start();
         }
     }
