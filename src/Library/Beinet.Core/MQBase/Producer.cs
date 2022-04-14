@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using NLog;
 
 namespace Beinet.Core.MQBase
 {
@@ -13,8 +14,12 @@ namespace Beinet.Core.MQBase
     /// </summary>
     public class Producer : IMqProducer, IDisposable
     {
-        #region 非公共属性
+        private static ILogger log = LogManager.GetCurrentClassLogger();
 
+        public static Producer DEFAULT = new Producer();
+
+
+        #region 非公共属性
 
         /// <summary>
         /// 储存生产的消息
@@ -36,9 +41,8 @@ namespace Beinet.Core.MQBase
         /// 指定消息类型的消费者对象收集
         /// </summary>
         protected Dictionary<Type, List<IMqConsumer>> consumerDic { get; } = new Dictionary<Type, List<IMqConsumer>>();
-        
-        #endregion
 
+        #endregion
 
 
         /// <summary>
@@ -62,7 +66,7 @@ namespace Beinet.Core.MQBase
 
             foreach (var msg in msgs)
             {
-                var item = new Message { Data = msg };
+                var item = new Message {Data = msg};
                 messages.Enqueue(item);
                 // 通知有数据了
                 semaphore.Release();
@@ -82,7 +86,7 @@ namespace Beinet.Core.MQBase
             while (true)
             {
                 semaphore.Wait(); // 等待信号量
-                Console.WriteLine(987);
+                log.Debug("收到信号量");
                 if (!messages.TryDequeue(out var msg))
                     continue;
 
@@ -107,6 +111,7 @@ namespace Beinet.Core.MQBase
             {
                 ass = GetAssembly(assemblyName);
             }
+
             if (ass == null)
             {
                 throw new ArgumentException($"Assembly: {assemblyName} 无法找到。");
@@ -126,7 +131,8 @@ namespace Beinet.Core.MQBase
             {
                 consumerAll.Add(consumer);
             }
-            Console.WriteLine($"所有类型 {consumer} 注册成功");
+
+            log.Info($"类型 {consumer} 注册成功");
         }
 
         /// <summary>
@@ -151,7 +157,6 @@ namespace Beinet.Core.MQBase
 
         #region 非公共方法
 
-
         /// <summary>
         /// 遍历所有消费者，进行分发处理
         /// </summary>
@@ -171,10 +176,12 @@ namespace Beinet.Core.MQBase
             {
                 consumers.AddRange(consumerType);
             }
+
             if (consumers.Count == 0)
             {
                 return;
             }
+
             // 多线程并行执行，线程安全性和顺序由消费者自行保障
             Parallel.ForEach(consumers, consumer => consumer.Process(msg));
         }
@@ -206,6 +213,7 @@ namespace Beinet.Core.MQBase
             {
                 throw new ArgumentException("object类型请改用Register非泛型方法");
             }
+
             lock (consumerDic)
             {
                 if (!consumerDic.TryGetValue(type, out var consumers))
@@ -213,10 +221,13 @@ namespace Beinet.Core.MQBase
                     consumers = new List<IMqConsumer>();
                     consumerDic.Add(type, consumers);
                 }
+
                 consumers.Add(consumer);
             }
-            Console.WriteLine($"{type} {consumer} 注册成功");
+
+            log.Info($"{type} {consumer} 注册成功");
         }
+
         /// <summary>
         /// 从指定组件里查找 实现消费者接口的类进行注册和实例化
         /// </summary>
@@ -233,7 +244,7 @@ namespace Beinet.Core.MQBase
                 consumerType.IsAssignableFrom(x) && x.GetConstructor(constructParams) != null);
             // 创建实例，并添加注册
             var tempResult = subTypes
-                .Select(x => (IMqConsumer)(x.GetConstructor(constructParams)?.Invoke(constructParamsObj))).ToList();
+                .Select(x => (IMqConsumer) (x.GetConstructor(constructParams)?.Invoke(constructParamsObj))).ToList();
 
             // 区分出继承泛型接口和非泛型接口的实例，分开注册
             var consumerTType = typeof(IMqConsumer<>);
@@ -251,6 +262,7 @@ namespace Beinet.Core.MQBase
                 }
             }
         }
+
         /// <summary>
         /// 检查消费者实例
         /// </summary>
@@ -263,8 +275,6 @@ namespace Beinet.Core.MQBase
             }
         }
 
-
         #endregion
-
     }
 }

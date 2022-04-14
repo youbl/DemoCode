@@ -14,7 +14,7 @@ namespace DemoCodeConsole.MQBaseDemo
         public void Run()
         {
             // 创建生产者
-            var producer = new Producer();
+            var producer = Producer.DEFAULT;
             // 从当前组件中查找消费者进行注册
             producer.Register();
 
