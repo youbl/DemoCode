@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
+using System.Reflection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Beinet.Feign
 {
@@ -10,7 +11,6 @@ namespace Beinet.Feign
     /// </summary>
     public interface IFeignConfig
     {
-        
         /// <summary>
         /// 请求拦截接口清单
         /// </summary>
@@ -48,6 +48,9 @@ namespace Beinet.Feign
 
     public class FeignDefaultConfig : IFeignConfig
     {
+        JsonSerializerSettings camelSettings = new JsonSerializerSettings
+            {ContractResolver = new CamelCasePropertyNamesContractResolver()};
+
         public virtual List<IRequestInterceptor> GetInterceptor()
         {
             return null;
@@ -59,6 +62,12 @@ namespace Beinet.Feign
                 return null;
             if (arg is string str)
                 return str;
+
+            if (IsCamelCase(arg))
+            {
+                return JsonConvert.SerializeObject(arg, camelSettings);
+            }
+
             return JsonConvert.SerializeObject(arg);
         }
 
@@ -75,7 +84,25 @@ namespace Beinet.Feign
             if (returnType == typeof(string))
                 return str;
 
+            if (IsCamelCase(returnType))
+            {
+                return JsonConvert.DeserializeObject(str, returnType, camelSettings);
+            }
+
             return JsonConvert.DeserializeObject(str, returnType);
+        }
+
+        protected virtual bool IsCamelCase(Type returnType)
+        {
+            var attribute = returnType.GetCustomAttribute<CamelCaseAttribute>();
+            return attribute != null;
+        }
+
+        protected virtual bool IsCamelCase(object obj)
+        {
+            if (obj == null)
+                return false;
+            return IsCamelCase(obj.GetType());
         }
 
         public virtual NLog.LogLevel LoggerLevel()
@@ -101,6 +128,5 @@ namespace Beinet.Feign
 
             return exp;
         }
-        
     }
 }

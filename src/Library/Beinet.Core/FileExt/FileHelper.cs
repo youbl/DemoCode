@@ -1,6 +1,4 @@
-﻿
-
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -16,6 +14,8 @@ namespace Beinet.Core.FileExt
         /// 无BOM头的UTF8格式，便于跟Java通讯
         /// </summary>
         public static Encoding UTF8_NoBom { get; } = new UTF8Encoding(false);
+
+        public const string INVALID_CH = @"[\<\>\/\\\|\:""\*\?\r\n]";
 
         /// <summary>
         /// 字符串处理委托
@@ -36,7 +36,7 @@ namespace Beinet.Core.FileExt
             }
 
             //  文件名中不允许出现的11个字符
-            if (Regex.IsMatch(str, @"[\<\>\/\\\|\:""\*\?\r\n]"))
+            if (Regex.IsMatch(str, INVALID_CH))
             {
                 return false;
             }
@@ -58,6 +58,17 @@ namespace Beinet.Core.FileExt
 
             return true;
         }
+
+        /// <summary>
+        /// 替换：不可用于文件名的字符
+        /// </summary>
+        /// <param name="fileName">准备使用的文件名</param>
+        /// <returns>可用的文件名</returns>
+        public static string ReplaceInvalidChar(string fileName)
+        {
+            return Regex.Replace(fileName, INVALID_CH, "_");
+        }
+
 
         /// <summary>
         /// 遍历指定文件的每一行，并进行处理，并返回处理行数
@@ -99,7 +110,7 @@ namespace Beinet.Core.FileExt
             if (!File.Exists(file))
                 return;
 
-            RetryHelper.Retry(()=>File.Delete(file), 2, retryWaitMillisecond);
+            RetryHelper.Retry(() => File.Delete(file), 2, retryWaitMillisecond);
         }
 
         /// <summary>
@@ -115,6 +126,7 @@ namespace Beinet.Core.FileExt
             {
                 throw new ArgumentNullException(nameof(targetFile), "filename can't be empty.");
             }
+
             if (content == null)
             {
                 throw new ArgumentNullException(nameof(content), "content can't be null.");

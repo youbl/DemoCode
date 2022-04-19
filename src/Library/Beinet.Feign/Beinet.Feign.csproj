@@ -52,6 +52,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CamelCaseAttribute.cs" />
     <Compile Include="RequestArgAttribute.cs" />
     <Compile Include="RequestMappingAttribute.cs" />
     <Compile Include="IFeignConfig.cs" />

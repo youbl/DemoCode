@@ -43,6 +43,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Transactions" />
@@ -84,6 +85,7 @@
     <Compile Include="Util\ConfigHelper.cs" />
     <Compile Include="CryptExt\CryptoHelper.cs" />
     <Compile Include="Util\IpHelper.cs" />
+    <Compile Include="Util\SystemHelper.cs" />
     <Compile Include="Util\WebHelper.cs" />
     <Compile Include="Xml\XmlHelper.cs" />
   </ItemGroup>
