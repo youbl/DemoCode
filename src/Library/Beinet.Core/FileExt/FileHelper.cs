@@ -178,6 +178,10 @@ namespace Beinet.Core.FileExt
         public static void Move(string sourceFile, string targetFile,
             bool keepOld = false, bool backup = false, int retryWaitMillisecond = 100)
         {
+            var targetDir = Path.GetDirectoryName(targetFile);
+            if (!string.IsNullOrEmpty(targetDir) && !Directory.Exists(targetDir))
+                Directory.CreateDirectory(targetDir);
+
             RetryHelper.Retry(DoMove, 2, retryWaitMillisecond);
 
             void DoMove()
@@ -207,6 +211,28 @@ namespace Beinet.Core.FileExt
                     File.Move(sourceFile, targetFile);
                 }
             }
+        }
+
+        /// <summary>
+        /// 把sourceDir下的文件和子目录，全部移动到targetDir下
+        /// </summary>
+        /// <param name="sourceDir"></param>
+        /// <param name="targetDir"></param>
+        public static void MoveDir(string sourceDir, string targetDir)
+        {
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                var targeFile = Path.Combine(targetDir, Path.GetFileName(file));
+                Move(file, targeFile);
+            }
+
+            foreach (var dir in Directory.GetDirectories(sourceDir))
+            {
+                var targetSubDir = Path.Combine(targetDir, Path.GetFileName(dir));
+                MoveDir(dir, targetSubDir); // 递归
+            }
+
+            Directory.Delete(sourceDir); // 移动完了，删除父目录
         }
     }
 }

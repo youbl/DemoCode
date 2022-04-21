@@ -119,6 +119,27 @@ namespace Beinet.Core.Util
         }
 
         /// <summary>
+        /// 返回CPU描述
+        /// </summary>
+        /// <returns></returns>
+        public static string GetCpuName()
+        {
+            var mos = "SELECT Name FROM Win32_Processor";
+            var result = new StringBuilder();
+            ManagementObjectQuery(mos, record =>
+            {
+                if (result.Length > 0)
+                {
+                    result.AppendLine();
+                }
+
+                result.AppendFormat("{0}", (record["Name"] ?? "").ToString().Trim());
+            }, 1);
+
+            return result.ToString();
+        }
+
+        /// <summary>
         /// 返回硬盘序列号
         /// </summary>
         /// <returns></returns>
@@ -177,6 +198,28 @@ namespace Beinet.Core.Util
 
                 if ((bool) record["IPEnabled"])
                     result.AppendFormat("{0}", (record["MacAddress"] ?? "").ToString().Trim());
+            });
+
+            return result.ToString().Trim();
+        }
+
+
+        /// <summary>
+        /// 返回磁盘信息
+        /// </summary>
+        /// <returns></returns>
+        public static string GetDiskInfo()
+        {
+            var mos = "SELECT Name,Size,FreeSpace FROM Win32_LogicalDisk";
+            var result = new StringBuilder();
+            ManagementObjectQuery(mos, record =>
+            {
+                if (result.Length > 0)
+                {
+                    result.AppendLine();
+                }
+
+                result.AppendFormat("{0} {1}/{2}", record["Name"], record["FreeSpace"], record["Size"]);
             });
 
             return result.ToString().Trim();
