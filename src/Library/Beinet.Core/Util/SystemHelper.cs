@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Management;
 using System.Text;
 
@@ -6,11 +7,34 @@ namespace Beinet.Core.Util
 {
     public static class SystemHelper
     {
+        // 用于计算cpu使用率，注意，一定要先调用一次 cpuUsage.NextValue();
+        private static PerformanceCounter cpuUsage =
+            new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+
+        // 用于计算可用内存
+        private static PerformanceCounter ramCounter =
+            new PerformanceCounter("Memory", "Available MBytes", true);
+
+        static SystemHelper()
+        {
+            cpuUsage.NextValue();
+            ramCounter.NextValue();
+        }
+
+        /// <summary>
+        /// 获取当前CPU使用率
+        /// </summary>
+        /// <returns></returns>
+        public static string GetCpuUsage()
+        {
+            return Math.Round(cpuUsage.NextValue(), 2) + "%";
+        }
+
         /// <summary>
         /// 获取当前物理内存数
         /// </summary>
         /// <returns></returns>
-        public static long GetPhysicalMemory()
+        public static long GetMemoryTotal()
         {
             var mos = "SELECT TotalPhysicalMemory FROM Win32_ComputerSystem";
             var result = 0L;
@@ -18,6 +42,15 @@ namespace Beinet.Core.Util
                 record => { result = long.Parse(record["TotalPhysicalMemory"].ToString().Trim()); });
 
             return result;
+        }
+
+        /// <summary>
+        /// 获取当前已用内存数
+        /// </summary>
+        /// <returns></returns>
+        public static long GetMemoryAvail()
+        {
+            return ((long) ramCounter.NextValue()) * 1024 * 1024;
         }
 
         /// <summary>

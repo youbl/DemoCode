@@ -5,7 +5,6 @@ using System.IO;
 using System.Text;
 using Beinet.Core.CryptExt;
 using Beinet.Core.FileExt;
-using Beinet.Core.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
@@ -17,7 +16,10 @@ namespace Beinet.Core.Serializer
     /// </summary>
     public class JsonSerializer : ISerializer
     {
+        public static JsonSerializer DEFAULT = new JsonSerializer();
+
         private static readonly Encoding Utf8 = FileHelper.UTF8_NoBom;
+
         /// <summary>
         /// 序列化用的属性
         /// </summary>
@@ -26,9 +28,10 @@ namespace Beinet.Core.Serializer
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             Converters = new List<JsonConverter>()
             {
-                new IsoDateTimeConverter { DateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff" }
+                new IsoDateTimeConverter {DateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff"}
             }
         };
+
         /// <summary>
         /// 反序列化用的属性
         /// </summary>
@@ -42,28 +45,33 @@ namespace Beinet.Core.Serializer
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="data"></param>
+        /// <param name="camel">是否驼峰</param>
         /// <returns></returns>
-        public string SerializToStr<T>(T data)
+        public string SerializToStr<T>(T data, bool camel = false)
         {
             // 微软原生用： new System.Web.Extensions.JavaScriptSerializer();
             if (data == null)
             {
                 return string.Empty;
             }
+
             var type = typeof(T);
             if (type == typeof(string))
             {
                 return data as string;
             }
+
             if (type == typeof(Guid))
             {
                 return data.ToString();
             }
+
             if (type == typeof(byte[]))
             {
                 // ReSharper disable once AssignNullToNotNullAttribute
                 return Convert.ToBase64String(data as byte[]);
             }
+
             return JsonConvert.SerializeObject(data, _serializerSettings);
         }
 
@@ -80,6 +88,7 @@ namespace Beinet.Core.Serializer
             {
                 return null;
             }
+
             return Utf8.GetBytes(result);
         }
 
@@ -96,20 +105,24 @@ namespace Beinet.Core.Serializer
             {
                 return default(T);
             }
+
             var type = typeof(T);
             if (type == typeof(string))
             {
-                return (T)(object)str;
+                return (T) (object) str;
             }
+
             if (type == typeof(Guid))
             {
                 Guid.TryParse(str, out var ret);
-                return (T)(object)ret;
+                return (T) (object) ret;
             }
+
             if (type == typeof(byte[]))
             {
-                return (T)(object)Convert.FromBase64String(str);
+                return (T) (object) Convert.FromBase64String(str);
             }
+
             return JsonConvert.DeserializeObject<T>(str, _deSerializerSettings);
         }
 
@@ -125,13 +138,13 @@ namespace Beinet.Core.Serializer
             {
                 return default(T);
             }
+
             return DeSerializFromStr<T>(Utf8.GetString(data));
         }
 
 
         #region 非接口方法
 
-        
         /// <summary>
         /// 把对象序列化到文件,并返回成功后的文件md5
         /// </summary>
@@ -144,10 +157,12 @@ namespace Beinet.Core.Serializer
             {
                 throw new ArgumentNullException(nameof(filename), "filename can't be empty.");
             }
+
             if (data == null)
             {
                 throw new ArgumentNullException(nameof(data), "data can't be empty.");
             }
+
             var tmpfile = filename + ".tmp";
             var dir = Path.GetDirectoryName(tmpfile);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
@@ -162,15 +177,17 @@ namespace Beinet.Core.Serializer
 
             Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
             using (var stream = new StreamWriter(tmpfile, false, Utf8))
-            //using (JsonTextWriter writer = new JsonTextWriter(file))
+                //using (JsonTextWriter writer = new JsonTextWriter(file))
             {
                 serializer.Serialize(stream, data);
             }
+
             string md5 = CryptoHelper.GetMD5HashFromFile(tmpfile);
             if (File.Exists(filename))
             {
                 File.Delete(filename);
             }
+
             File.Move(tmpfile, filename);
             return md5;
         }
@@ -187,10 +204,12 @@ namespace Beinet.Core.Serializer
             {
                 throw new ArgumentNullException(nameof(filename), "filename can't be empty.");
             }
+
             if (!File.Exists(filename))
             {
                 throw new ArgumentNullException(nameof(filename), "filename doesn't exists.");
             }
+
             Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
             using (var file = new StreamReader(filename, Utf8))
             using (var reader = new JsonTextReader(file))
@@ -210,6 +229,7 @@ namespace Beinet.Core.Serializer
             {
                 return DeSerializFromStr<Dictionary<string, string>>(Convert.ToString(obj));
             }
+
             if (obj is IDictionary dictTmp)
             {
                 var dict = new Dictionary<string, string>();
@@ -217,19 +237,22 @@ namespace Beinet.Core.Serializer
                 {
                     dict[Convert.ToString(kv.Key)] = Convert.ToString(kv.Value);
                 }
+
                 return dict;
             }
 
             if (obj is JToken token && token.Type == JTokenType.Object)
             {
-                var jobj = (JObject)obj;
+                var jobj = (JObject) obj;
                 var dict = new Dictionary<string, string>();
                 foreach (var kv in jobj)
                 {
                     dict[kv.Key] = Convert.ToString(kv.Value);
                 }
+
                 return dict;
             }
+
             return null;
         }
 

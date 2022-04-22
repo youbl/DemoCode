@@ -3,7 +3,7 @@
 namespace Beinet.Feign
 {
     /// <summary>
-    /// 方法的参数作为Header发送的特性定义
+    /// 方法的参数特性定义父类
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
     public class RequestArgAttribute : Attribute
@@ -45,7 +45,7 @@ namespace Beinet.Feign
 
 
     /// <summary>
-    /// 方法的参数作为Header发送的特性定义
+    /// 方法的参数作为URL参数发送的特性定义
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
     public class RequestParamAttribute : RequestArgAttribute
@@ -75,7 +75,8 @@ namespace Beinet.Feign
 
 
     /// <summary>
-    /// 方法的参数不传递
+    /// 方法的参数不传递。
+    /// 通常用于在url里拼接参数
     /// </summary>
     [AttributeUsage(AttributeTargets.Parameter, Inherited = false, AllowMultiple = false)]
     public class RequestNoneAttribute : RequestArgAttribute

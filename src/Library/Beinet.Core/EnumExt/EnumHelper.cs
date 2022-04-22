@@ -1,4 +1,8 @@
-﻿namespace Beinet.Core.EnumExt
+﻿using System;
+using System.ComponentModel;
+using System.Reflection;
+
+namespace Beinet.Core.EnumExt
 {
     /// <summary>
     /// 枚举相关辅助类
@@ -18,7 +22,7 @@
             {
                 try
                 {
-                    T value = (T)System.Enum.Parse(typeof(T), source, true);
+                    T value = (T) System.Enum.Parse(typeof(T), source, true);
                     if (System.Enum.IsDefined(typeof(T), value))
                     {
                         return value;
@@ -29,7 +33,36 @@
                     return defaultValue;
                 }
             }
+
             return defaultValue;
+        }
+
+        /// <summary>
+        /// 获取枚举的字符串描述.
+        /// 未添加Description注解时，返回ToString
+        /// </summary>
+        /// <param name="enumVal"></param>
+        /// <returns></returns>
+        public static string GetDesc(this Enum enumVal)
+        {
+            var ret = enumVal.ToString();
+
+            var type = enumVal.GetType();
+            var memInfo = type.GetMember(ret);
+            if (memInfo.Length > 0)
+            {
+                object[] attrs = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+                if (attrs.Length > 0)
+                {
+                    var tmp = ((DescriptionAttribute) attrs[0]).Description;
+                    if (!string.IsNullOrEmpty(tmp))
+                    {
+                        ret = tmp;
+                    }
+                }
+            }
+
+            return ret;
         }
     }
 }
