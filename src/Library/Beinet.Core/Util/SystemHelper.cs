@@ -22,6 +22,16 @@ namespace Beinet.Core.Util
         }
 
         /// <summary>
+        /// 获取开机启动时间
+        /// </summary>
+        /// <returns></returns>
+        public static string GetStartTime()
+        {
+            var runMiis = Environment.TickCount;
+            return DateTime.Now.AddMilliseconds(-runMiis).ToString("yyyy-MM-dd HH:mm:ss.fff");
+        }
+
+        /// <summary>
         /// 获取当前CPU使用率
         /// </summary>
         /// <returns></returns>

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Beinet.Core.Reflection;
 using NLog;
 
 namespace Beinet.Core.MQBase
@@ -233,7 +234,7 @@ namespace Beinet.Core.MQBase
         /// <param name="ass"></param>
         internal void RegisterAssembly(Assembly ass)
         {
-            var types = ass.GetTypes();
+            var types = TypeHelper.GetLoadableTypes(ass);
             var constructParams = new Type[] { };
             var constructParamsObj = new object[] { };
 

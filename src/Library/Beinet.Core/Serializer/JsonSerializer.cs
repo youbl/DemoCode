@@ -8,6 +8,7 @@ using Beinet.Core.FileExt;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 
 namespace Beinet.Core.Serializer
 {
@@ -30,6 +31,19 @@ namespace Beinet.Core.Serializer
             {
                 new IsoDateTimeConverter {DateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff"}
             }
+        };
+
+        /// <summary>
+        /// 驼峰序列化属性
+        /// </summary>
+        static JsonSerializerSettings _camelSettings = new JsonSerializerSettings
+        {
+            ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            Converters = new List<JsonConverter>()
+            {
+                new IsoDateTimeConverter {DateTimeFormat = "yyyy-MM-dd HH:mm:ss.fff"}
+            },
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
 
         /// <summary>
@@ -72,6 +86,8 @@ namespace Beinet.Core.Serializer
                 return Convert.ToBase64String(data as byte[]);
             }
 
+            if (camel)
+                return JsonConvert.SerializeObject(data, _camelSettings);
             return JsonConvert.SerializeObject(data, _serializerSettings);
         }
 

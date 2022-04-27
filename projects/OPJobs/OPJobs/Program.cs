@@ -15,6 +15,10 @@ namespace OPJobs
     {
         private static ILogger logger = LogManager.GetCurrentClassLogger();
 
+        /**
+         * 有参数时，按参数执行.
+         * 没有参数时，按 Scheduled 特性配置执行
+         */
         static void Main(string[] args)
         {
             // 全局异常捕获
