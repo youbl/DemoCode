@@ -59,9 +59,12 @@
     <Compile Include="EnumExt\EnumHelper.cs" />
     <Compile Include="Env.cs" />
     <Compile Include="FileExt\FileHelper.cs" />
+    <Compile Include="Runs\RunableUtil.cs" />
+    <Compile Include="Runs\RunableBase.cs" />
     <Compile Include="Logging\LogHelper.cs" />
     <Compile Include="MQBase\Publisher.cs" />
     <Compile Include="NumberExt\NumHelper.cs" />
+    <Compile Include="Reflection\Scanner.cs" />
     <Compile Include="RetryHelper.cs" />
     <Compile Include="IRunable.cs" />
     <Compile Include="Lock\LockDefault.cs" />

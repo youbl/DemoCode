@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Beinet.Core
+﻿namespace Beinet.Core
 {
     /// <summary>
     /// 带可执行方法的接口
