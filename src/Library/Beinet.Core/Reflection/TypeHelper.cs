@@ -20,6 +20,7 @@ namespace Beinet.Core.Reflection
         private static Assembly nowAssembly = Assembly.GetExecutingAssembly();
 
         private static Dictionary<string, Assembly> _arrAssemblys;
+
         /// <summary>
         /// 当前项目的所有程序集
         /// </summary>
@@ -29,6 +30,7 @@ namespace Beinet.Core.Reflection
         /// 缓存收集到的反射类型，避免重复反射
         /// </summary>
         private static readonly Dictionary<string, Type> _arrTypes = new Dictionary<string, Type>();
+
         /// <summary>
         /// 缓存收集到的命名空间,避免重复反射
         /// </summary>
@@ -50,6 +52,7 @@ namespace Beinet.Core.Reflection
             {
                 return null;
             }
+
             Type ret;
             lock (_arrTypes)
             {
@@ -59,6 +62,7 @@ namespace Beinet.Core.Reflection
                     _arrTypes[type] = ret;
                 }
             }
+
             return ret;
         }
 
@@ -80,6 +84,7 @@ namespace Beinet.Core.Reflection
                 {
                     return result;
                 }
+
                 var idx = info.LastIndexOf('.');
                 if (idx > 0)
                 {
@@ -90,6 +95,7 @@ namespace Beinet.Core.Reflection
             {
                 assName = arrInfo[1];
             }
+
             if (!string.IsNullOrEmpty(assName))
             {
                 var ass = GetAssembly(assName);
@@ -97,8 +103,10 @@ namespace Beinet.Core.Reflection
                 {
                     return null;
                 }
+
                 result = ass.GetType(arrInfo[0]);
             }
+
             return result;
         }
 
@@ -127,6 +135,7 @@ namespace Beinet.Core.Reflection
             {
                 return null;
             }
+
             var obj = type.Assembly.CreateInstance(type.FullName ?? "", false,
                 BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public, null, args, null, null);
             return obj;
@@ -145,10 +154,12 @@ namespace Beinet.Core.Reflection
             {
                 throw new ArgumentException("Argument can't be null.");
             }
+
             if (subType == parentType)
             {
                 return false;
             }
+
             var typeObj = typeof(Object);
             if (typeObj == parentType)
             {
@@ -156,11 +167,12 @@ namespace Beinet.Core.Reflection
             }
 
             // 检查这种类型 class subType : parentType
-            if (parentType.IsAssignableFrom(subType))// 这个支持interface和class
-            // if(subType.IsSubclassOf(parentType))  // 这个只支持 class
+            if (parentType.IsAssignableFrom(subType)) // 这个支持interface和class
+                // if(subType.IsSubclassOf(parentType))  // 这个只支持 class
             {
                 return true;
             }
+
             // 如果是 typeof(xxx<>)时
             if (parentType.IsGenericTypeDefinition)
             {
@@ -168,7 +180,7 @@ namespace Beinet.Core.Reflection
                 {
                     // 检查这种实现接口的 class xxx : Iyyy<zzz>
                     if (subType.GetInterfaces().Any(tp =>
-                        tp.IsGenericType && tp.GetGenericTypeDefinition() == parentType))
+                            tp.IsGenericType && tp.GetGenericTypeDefinition() == parentType))
                     {
                         return true;
                     }
@@ -182,10 +194,12 @@ namespace Beinet.Core.Reflection
                         {
                             return true;
                         }
+
                         subType = subType.BaseType;
                     }
                 }
             }
+
             return false;
         }
 
@@ -215,9 +229,10 @@ namespace Beinet.Core.Reflection
                 return ex.Types.Where(t => t != null);
             }
         }
+
         #endregion
 
-        
+
         #region 程序集相关
 
         /// <summary>
@@ -255,28 +270,38 @@ namespace Beinet.Core.Reflection
             Regex regObj = null;
             if (!string.IsNullOrEmpty(regex))
                 regObj = new Regex(regex);
-            foreach (var file in Directory.GetFiles(dir, "*.dll", SearchOption.TopDirectoryOnly))
+            var files = Directory.GetFiles(dir, "*.dll", SearchOption.TopDirectoryOnly);
+            foreach (var file in files)
             {
-                var assemblyString = Path.GetFileNameWithoutExtension(file);
-                if (string.IsNullOrEmpty(assemblyString) || (regObj != null && !regObj.IsMatch(assemblyString)))
-                    continue;
-                try
-                {
-                    var ass = Assembly.Load(assemblyString);
-                    if (ass == null)
-                    {
-                        continue;
-                    }
-
-                    arrAssembly.Add(assemblyString, ass);
-                }
-                catch
-                {
-                    // ignored
-                }
+                LoadAssembly(file, regObj, arrAssembly);
             }
 
             return arrAssembly;
+        }
+
+        private static void LoadAssembly(string file, Regex regObj, Dictionary<string, Assembly> arrAssembly)
+        {
+            var assemblyString = Path.GetFileNameWithoutExtension(file);
+            if (string.IsNullOrEmpty(assemblyString) || (regObj != null && !regObj.IsMatch(assemblyString)))
+                return;
+
+            if (arrAssembly.ContainsKey(assemblyString))
+                return;
+
+            try
+            {
+                var ass = Assembly.Load(assemblyString);
+                if (ass == null)
+                {
+                    return;
+                }
+
+                arrAssembly.Add(assemblyString, ass);
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
 
@@ -319,6 +344,7 @@ namespace Beinet.Core.Reflection
             {
                 return null;
             }
+
             List<Type> temp;
             lock (_arrNameSpace)
                 if (!_arrNameSpace.TryGetValue(namespaceName, out temp))
@@ -326,6 +352,7 @@ namespace Beinet.Core.Reflection
                     temp = GetRealNameSpace(namespaceName);
                     _arrNameSpace[namespaceName] = temp;
                 }
+
             return temp;
         }
 
@@ -355,17 +382,16 @@ namespace Beinet.Core.Reflection
                     throw new Exception("指定的程序集未载到：" + assName);
                 return GetLoadableTypes(ass).Where(x => x.Namespace == strs[0]).ToList();
             }
+
             return null;
         }
-
-
-
 
 
         #region 从exe嵌入资源里加载dll的方法, Web项目不要使用
 
         private static Assembly exeAss = Assembly.GetEntryAssembly();
         private static System.Resources.ResourceManager resManager;
+
         private static System.Resources.ResourceManager ResManager
         {
             get
@@ -376,6 +402,7 @@ namespace Beinet.Core.Reflection
                     resManager = new System.Resources.ResourceManager(entryNamespace + ".Properties.Resources",
                         Assembly.GetExecutingAssembly());
                 }
+
                 return resManager;
             }
         }
@@ -403,7 +430,7 @@ namespace Beinet.Core.Reflection
             {
                 if (stream != null)
                 {
-                    var len = (int)stream.Length;
+                    var len = (int) stream.Length;
                     var assemblyData = new byte[len];
                     if (stream.Read(assemblyData, 0, len) == len)
                     {
@@ -416,11 +443,12 @@ namespace Beinet.Core.Reflection
             dllName = dllName.Replace(".", "_");
             try
             {
-                var bytes = (byte[])ResManager.GetObject(dllName);
+                var bytes = (byte[]) ResManager.GetObject(dllName);
                 if (bytes == null)
                 {
                     return null;
                 }
+
                 return Assembly.Load(bytes);
             }
             catch (Exception)
@@ -430,6 +458,5 @@ namespace Beinet.Core.Reflection
         }
 
         #endregion
-
     }
 }

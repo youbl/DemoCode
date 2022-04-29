@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace Beinet.Core.Reflection
 {
@@ -10,6 +11,11 @@ namespace Beinet.Core.Reflection
     /// </summary>
     public static class Scanner
     {
+        /// <summary>
+        /// 要跳过，不扫描的组件正则
+        /// </summary>
+        public static string IgnoreAssemblysRegex = @"^System\.";
+
         /// <summary>
         /// 根据父类型（class或interface），查找所有子类.
         /// </summary>
@@ -20,8 +26,13 @@ namespace Beinet.Core.Reflection
             var ret = new List<Type>();
 
             var arrAssembly = TypeHelper.Assemblys;
+
+            var ignoreRegex = new Regex(IgnoreAssemblysRegex);
             foreach (var assembly in arrAssembly.Values)
             {
+                if (ignoreRegex.IsMatch(assembly.FullName))
+                    continue;
+
                 var types = TypeHelper.GetLoadableTypes(assembly);
                 var subTypes = types.Where(item =>
                     parentType != item &&
