@@ -14,7 +14,7 @@ namespace Beinet.Core.Reflection
         /// 根据父类型（class或interface），查找所有子类.
         /// </summary>
         /// <param name="parentType">父类型（class或interface）</param>
-        /// <returns>子类列表</returns>
+        /// <returns>子类列表(不含接口和虚拟类)</returns>
         public static List<Type> ScanByParentType(Type parentType)
         {
             var ret = new List<Type>();
@@ -23,7 +23,11 @@ namespace Beinet.Core.Reflection
             foreach (var assembly in arrAssembly.Values)
             {
                 var types = TypeHelper.GetLoadableTypes(assembly);
-                var subTypes = types.Where(parentType.IsAssignableFrom);
+                var subTypes = types.Where(item =>
+                    parentType != item &&
+                    parentType.IsAssignableFrom(item) &&
+                    !item.IsInterface &&
+                    !item.IsAbstract);
 
                 ret.AddRange(subTypes);
             }
@@ -57,7 +61,8 @@ namespace Beinet.Core.Reflection
         }
 
         /// <summary>
-        /// 根据特性，查找所有加了该特性的class列表
+        /// 根据特性，查找所有加了该特性的class列表.
+        /// 不含接口和虚拟类
         /// </summary>
         /// <param name="attributeType">Attribute类型</param>
         /// <returns></returns>
@@ -71,6 +76,9 @@ namespace Beinet.Core.Reflection
                 var types = TypeHelper.GetLoadableTypes(assembly);
                 foreach (var type in types)
                 {
+                    if (type.IsInterface || type.IsAbstract)
+                        continue;
+
                     var att = type.GetCustomAttribute(attributeType);
                     if (att == null)
                         continue;
@@ -102,6 +110,9 @@ namespace Beinet.Core.Reflection
                 var types = TypeHelper.GetLoadableTypes(assembly);
                 foreach (var type in types)
                 {
+                    if (type.IsInterface || type.IsAbstract)
+                        continue;
+
                     var methods = type.GetMethods(BindingFlags.Static |
                                                   BindingFlags.Instance |
                                                   BindingFlags.Public |

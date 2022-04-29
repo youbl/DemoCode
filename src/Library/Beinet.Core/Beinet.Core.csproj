@@ -82,6 +82,7 @@
     <Compile Include="Reflection\PropertyGetSetHelper.cs" />
     <Compile Include="Reflection\ReflectionCache.cs" />
     <Compile Include="Reflection\TypeHelper.cs" />
+    <Compile Include="Serializer\EnumDescriptionConverter.cs" />
     <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Serializer\JsonSerializer.cs" />
     <Compile Include="StringExt\StringHelper.cs" />
