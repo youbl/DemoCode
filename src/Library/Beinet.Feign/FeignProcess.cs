@@ -259,6 +259,8 @@ namespace Beinet.Feign
             int idx = -1;
             do
             {
+                if (idx >= url.Length)
+                    break;
                 idx = url.IndexOf('{', idx + 1);
                 if (idx < 0)
                     break;
