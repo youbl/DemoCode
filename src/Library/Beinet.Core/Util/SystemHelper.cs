@@ -2,23 +2,50 @@
 using System.Diagnostics;
 using System.Management;
 using System.Text;
+using NLog;
 
 namespace Beinet.Core.Util
 {
     public static class SystemHelper
     {
+        private static ILogger log = LogManager.GetCurrentClassLogger();
+
         // 用于计算cpu使用率，注意，一定要先调用一次 cpuUsage.NextValue();
-        private static PerformanceCounter cpuUsage =
-            new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+        private static PerformanceCounter cpuUsage;
 
         // 用于计算可用内存
-        private static PerformanceCounter ramCounter =
-            new PerformanceCounter("Memory", "Available MBytes", true);
+        private static PerformanceCounter ramCounter;
 
         static SystemHelper()
         {
-            cpuUsage.NextValue();
-            ramCounter.NextValue();
+            /*
+             * 如果报错：无法加载计数器名称数据，因为从注册表读取的索引“”无效
+             * 说明用户机器缺少某个计数器，可以尝试修复：
+             * 按开始=》运行，输入命令: perfmon
+             * 可以打开性能监视器，如果出错
+             * cmd 输入:  lodctr /r 即可修复
+             */
+            try
+            {
+                cpuUsage =
+                    new PerformanceCounter("Processor", "% Processor Time", "_Total", true);
+                cpuUsage.NextValue();
+            }
+            catch (Exception exp)
+            {
+                log.Error("cpuUsage初始化出错:{0}", exp.Message);
+            }
+
+            try
+            {
+                ramCounter =
+                    new PerformanceCounter("Memory", "Available MBytes", true);
+                ramCounter.NextValue();
+            }
+            catch (Exception exp)
+            {
+                log.Error("ramCounter初始化出错:{0}", exp.Message);
+            }
         }
 
         /// <summary>
@@ -37,6 +64,8 @@ namespace Beinet.Core.Util
         /// <returns></returns>
         public static string GetCpuUsage()
         {
+            if (cpuUsage == null)
+                return "";
             return Math.Round(cpuUsage.NextValue(), 2) + "%";
         }
 
@@ -60,6 +89,8 @@ namespace Beinet.Core.Util
         /// <returns></returns>
         public static long GetMemoryAvail()
         {
+            if (ramCounter == null)
+                return 0;
             return ((long) ramCounter.NextValue()) * 1024 * 1024;
         }
 
