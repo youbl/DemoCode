@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Management;
 using System.Text;
+//using Microsoft.Win32;
 using NLog;
 
 namespace Beinet.Core.Util
@@ -145,7 +146,7 @@ namespace Beinet.Core.Util
             }
         }
 
-        private static string ByteToStr(object byteSize)
+        public static string ByteToStr(object byteSize)
         {
             if (byteSize == null)
                 return "0";
@@ -153,7 +154,7 @@ namespace Beinet.Core.Util
             return ByteToStr(size);
         }
 
-        private static string ByteToStr(long byteSize)
+        public static string ByteToStr(long byteSize)
         {
             if (byteSize < 1024)
                 return byteSize.ToString() + "字节";
@@ -297,6 +298,49 @@ namespace Beinet.Core.Util
             });
 
             return result.ToString().Trim();
+        }
+
+        /// <summary>
+        /// 禁用或启用防火墙
+        /// </summary>
+        /// <param name="enable"></param>
+        /// <returns></returns>
+        public static bool FirewallOperate(bool enable)
+        {
+            var sw = enable ? "on" : "off";
+            var cmd = "/C netsh advfirewall set allprofiles state " + sw;
+            using (Process process = new Process())
+            {
+                ProcessStartInfo startInfo = new ProcessStartInfo();
+                startInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                startInfo.FileName = @"C:\Windows\System32\cmd.exe";
+                startInfo.Arguments = cmd;
+                process.StartInfo = startInfo;
+                process.Start();
+                process.WaitForExit();
+            }
+
+            return true;
+
+            // 注册表方式，验证不成功
+            // var val = enable ? 1 : 0;
+            // RegistryKey key = Registry.LocalMachine;
+            // string path =
+            //     "HKEY_LOCAL_MACHINE\\SYSTEM\\ControlSet001\\Services\\SharedAccess\\Defaults\\FirewallPolicy";
+            // RegistryKey firewall = key.OpenSubKey(path, true);
+            // if (firewall == null)
+            //     return false;
+            //
+            // RegistryKey domainProfile = firewall.OpenSubKey("DomainProfile", true);
+            // RegistryKey publicProfile = firewall.OpenSubKey("PublicProfile", true);
+            // RegistryKey standardProfile = firewall.OpenSubKey("StandardProfile", true);
+            // if (domainProfile != null)
+            //     domainProfile.SetValue("EnableFirewall", val, RegistryValueKind.DWord);
+            // if (publicProfile != null)
+            //     publicProfile.SetValue("EnableFirewall", val, RegistryValueKind.DWord);
+            // if (standardProfile != null)
+            //     standardProfile.SetValue("EnableFirewall", val, RegistryValueKind.DWord);
+            // return true;
         }
     }
 }
