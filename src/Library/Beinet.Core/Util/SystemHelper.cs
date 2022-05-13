@@ -105,14 +105,10 @@ namespace Beinet.Core.Util
             var result = new StringBuilder();
             ManagementObjectQuery(mos, record =>
             {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0}*{1}",
+                var row = string.Format("{0}*{1}",
                     record["CurrentHorizontalResolution"],
                     record["CurrentVerticalResolution"]);
+                Append(result, row);
             });
 
             return result.ToString();
@@ -180,15 +176,7 @@ namespace Beinet.Core.Util
         {
             var mos = "SELECT ProcessorId FROM Win32_Processor";
             var result = new StringBuilder();
-            ManagementObjectQuery(mos, record =>
-            {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0}", (record["ProcessorId"] ?? "").ToString().Trim());
-            }, 1);
+            ManagementObjectQuery(mos, record => { Append(result, record["ProcessorId"]); }, 1);
 
             return result.ToString();
         }
@@ -201,15 +189,7 @@ namespace Beinet.Core.Util
         {
             var mos = "SELECT Name FROM Win32_Processor";
             var result = new StringBuilder();
-            ManagementObjectQuery(mos, record =>
-            {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0}", (record["Name"] ?? "").ToString().Trim());
-            }, 1);
+            ManagementObjectQuery(mos, record => { Append(result, record["Name"]); }, 1);
 
             return result.ToString();
         }
@@ -222,15 +202,7 @@ namespace Beinet.Core.Util
         {
             var mos = "SELECT SerialNumber FROM Win32_DiskDrive";
             var result = new StringBuilder();
-            ManagementObjectQuery(mos, record =>
-            {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0}", (record["SerialNumber"] ?? "").ToString().Trim()); // Model
-            }, 1);
+            ManagementObjectQuery(mos, record => { Append(result, record["SerialNumber"]); }, 1);
 
             return result.ToString();
         }
@@ -245,12 +217,7 @@ namespace Beinet.Core.Util
             var result = new StringBuilder();
             ManagementObjectQuery(mos, record =>
             {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0}", (record["SerialNumber"] ?? "").ToString().Trim());
+                Append(result, record["SerialNumber"]);
             }, 1);
 
             return result.ToString();
@@ -266,13 +233,10 @@ namespace Beinet.Core.Util
             var result = new StringBuilder();
             ManagementObjectQuery(mos, record =>
             {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
+                if (!(bool) record["IPEnabled"])
+                    return;
 
-                if ((bool) record["IPEnabled"])
-                    result.AppendFormat("{0}", (record["MacAddress"] ?? "").ToString().Trim());
+                Append(result, record["MacAddress"]);
             });
 
             return result.ToString().Trim();
@@ -289,15 +253,23 @@ namespace Beinet.Core.Util
             var result = new StringBuilder();
             ManagementObjectQuery(mos, record =>
             {
-                if (result.Length > 0)
-                {
-                    result.AppendLine();
-                }
-
-                result.AppendFormat("{0} {1}/{2}", record["Name"], record["FreeSpace"], record["Size"]);
+                var row = string.Format("{0} {1}/{2}", record["Name"], record["FreeSpace"], record["Size"]);
+                Append(result, row);
             });
 
             return result.ToString().Trim();
+        }
+
+        private static void Append(StringBuilder sb, object obj, string split = ";")
+        {
+            if (obj == null)
+                return;
+            var newVal = obj.ToString().Trim();
+            if (newVal.Length <= 0)
+                return;
+            if (sb.Length > 0)
+                sb.Append(split);
+            sb.Append(newVal);
         }
 
         /// <summary>

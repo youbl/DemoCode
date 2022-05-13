@@ -28,11 +28,13 @@ namespace Beinet.Feign
         /// <param name="headers">要传输的header清单</param>
         /// <param name="interceptors">拦截器清单</param>
         /// <param name="level">日志级别</param>
+        /// <param name="status">http响应码</param>
         /// <returns></returns>
         public static string GetPage(string url, string method, string postStr,
             Dictionary<string, string> headers,
             List<IRequestInterceptor> interceptors,
-            LogLevel level)
+            LogLevel level,
+            out int status)
         {
             if (!IsUrl(url))
                 url = "http://" + url;
@@ -68,7 +70,14 @@ namespace Beinet.Feign
             {
                 foreach (var interceptor in interceptors)
                 {
-                    interceptor.BeforeRequest(request, postStr);
+                    try
+                    {
+                        interceptor.BeforeRequest(request, postStr);
+                    }
+                    catch (Exception exp)
+                    {
+                        throw new Exception(interceptor.GetType().FullName + " BeforeRequest出错:", exp);
+                    }
                 }
             }
 
@@ -120,12 +129,29 @@ namespace Beinet.Feign
             {
                 using (var response = (HttpWebResponse) request.GetResponse())
                 {
-                    var ret = GetResponseString(response);
+                    string ret;
+                    status = (int) response.StatusCode;
+                    if (status == 301 || status == 302)
+                    {
+                        ret = response.Headers.Get("Location") ?? "";
+                    }
+                    else
+                    {
+                        ret = GetResponseString(response);
+                    }
+
                     if (interceptors != null)
                     {
                         foreach (var interceptor in interceptors)
                         {
-                            interceptor.AfterRequest(request, response, ret, null);
+                            try
+                            {
+                                interceptor.AfterRequest(request, response, ret, null);
+                            }
+                            catch (Exception exp)
+                            {
+                                throw new Exception(interceptor.GetType().FullName + " AfterRequest出错:", exp);
+                            }
                         }
                     }
 
@@ -213,6 +239,5 @@ namespace Beinet.Feign
             //                return false;
             return true;
         }
-
     }
 }

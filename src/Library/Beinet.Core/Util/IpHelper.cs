@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -16,6 +17,7 @@ namespace Beinet.Core.Util
         /// 是否ip的正则
         /// </summary>
         static Regex regIp = new Regex(@"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", RegexOptions.Compiled);
+
         /// <summary>
         /// 判断指定的字符串是否IP
         /// </summary>
@@ -51,6 +53,7 @@ namespace Beinet.Core.Util
                         {
                             continue;
                         }
+
                         ipret = iptmp;
                         if (!iptmp.StartsWith("10.", StringComparison.Ordinal) &&
                             !iptmp.StartsWith("172.16.", StringComparison.Ordinal) &&
@@ -59,6 +62,7 @@ namespace Beinet.Core.Util
                             return iptmp;
                         }
                     }
+
                     // 没找到外网IP时，返回一个内网IP
                     if (ipret.Length > 0)
                     {
@@ -71,6 +75,7 @@ namespace Beinet.Core.Util
                 {
                     return realip;
                 }
+
                 return request.UserHostAddress;
             }
             catch (Exception)
@@ -117,6 +122,7 @@ namespace Beinet.Core.Util
                     if (ipa.AddressFamily == AddressFamily.InterNetwork)
                         ips.AppendFormat("{0};", ipa);
                 }
+
                 if (ips.Length > 1)
                     ips.Remove(ips.Length - 1, 1);
                 return ips.ToString();
@@ -127,7 +133,30 @@ namespace Beinet.Core.Util
                 return string.Empty;
             }
         }
-        
+
+        /// <summary>
+        /// 获取服务器(本机)所有IPV4地址列表
+        /// </summary>
+        /// <returns>本机所有IPV4地址列表</returns>
+        public static List<string> GetServerIpArray()
+        {
+            var ips = new List<string>();
+            try
+            {
+                IPHostEntry IpEntry = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (IPAddress ipa in IpEntry.AddressList)
+                {
+                    if (ipa.AddressFamily == AddressFamily.InterNetwork)
+                        ips.Add(ipa.ToString());
+                }
+            }
+            catch (Exception)
+            {
+                //LogHelper.WriteCustom("获取本地ip错误" + ex, @"zIP\", false);
+            }
+
+            return ips;
+        }
 
         /// <summary>
         /// 将IP地址转成长整型
@@ -146,12 +175,13 @@ namespace Beinet.Core.Util
             //return ipNum;
             try
             {
-                string[] ipList = ip.Split(new char[] { '.' });
+                string[] ipList = ip.Split(new char[] {'.'});
                 string xIP = string.Empty;
                 foreach (string ipStr in ipList)
                 {
                     xIP += Convert.ToByte(ipStr).ToString("X").PadLeft(2, '0');
                 }
+
                 long ipResult = long.Parse(xIP, System.Globalization.NumberStyles.HexNumber);
                 return ipResult;
             }
@@ -190,7 +220,7 @@ namespace Beinet.Core.Util
             return b.ToString().ToLower();
         }
 
-        
+
         #region 判断IP地址是否在内网IP地址所在范围
 
         /// <summary>
@@ -210,6 +240,7 @@ namespace Beinet.Core.Util
             {
                 return true;
             }
+
             long ipNum = ConvertIPToLong(ipAddress);
             long aBegin = ConvertIPToLong("10.0.0.0");
             long aEnd = ConvertIPToLong("10.255.255.255");
@@ -217,7 +248,8 @@ namespace Beinet.Core.Util
             long bEnd = ConvertIPToLong("172.31.255.255");
             long cBegin = ConvertIPToLong("192.168.0.0");
             long cEnd = ConvertIPToLong("192.168.255.255");
-            bool isInnerIp = IsInner(ipNum, aBegin, aEnd) || IsInner(ipNum, bBegin, bEnd) || IsInner(ipNum, cBegin, cEnd);
+            bool isInnerIp = IsInner(ipNum, aBegin, aEnd) || IsInner(ipNum, bBegin, bEnd) ||
+                             IsInner(ipNum, cBegin, cEnd);
             return isInnerIp;
         }
 
@@ -232,7 +264,7 @@ namespace Beinet.Core.Util
         {
             return (userIp >= begin) && (userIp <= end);
         }
-        #endregion
 
+        #endregion
     }
 }

@@ -156,7 +156,27 @@ namespace Beinet.Feign
                 if (bodyArg != null)
                     postStr = Config.Encoding(bodyArg);
 
-                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors, Level);
+                var httpReturn = WebHelper.GetPage(url, method, postStr, headers, Interceptors, Level, out var status);
+                if (status >= 300)
+                {
+                    if (status == 301 || status == 302)
+                    {
+                        if (!httpReturn.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                            !httpReturn.StartsWith("", StringComparison.OrdinalIgnoreCase))
+                        {
+                            ThrowExp(status, httpReturn);
+                        }
+
+                        // 重定向一次
+                        httpReturn = WebHelper.GetPage(httpReturn, "GET", "", headers, Interceptors, Level, out status);
+                    }
+                }
+
+                // 不再重定向
+                if (status >= 300)
+                {
+                    ThrowExp(status, httpReturn);
+                }
 
                 var ret = Config.Decoding(httpReturn, returnType);
                 if (ret == null)
@@ -180,6 +200,11 @@ namespace Beinet.Feign
             }
 
             throw new ArgumentException("Decoding返回的对象类型必须是：" + returnType.FullName + "，不允许是：" + realType.FullName);
+        }
+
+        private void ThrowExp(int status, string msg)
+        {
+            throw new WebException("Http响应码:" + status + " " + msg);
         }
 
         /// <summary>
