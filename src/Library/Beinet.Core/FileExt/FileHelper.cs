@@ -2,6 +2,7 @@
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using NLog;
 
 namespace Beinet.Core.FileExt
 {
@@ -10,6 +11,8 @@ namespace Beinet.Core.FileExt
     /// </summary>
     public static class FileHelper
     {
+        private static ILogger log = LogManager.GetCurrentClassLogger();
+
         /// <summary>
         /// 无BOM头的UTF8格式，便于跟Java通讯
         /// </summary>
@@ -232,7 +235,14 @@ namespace Beinet.Core.FileExt
                 MoveDir(dir, targetSubDir); // 递归
             }
 
-            Directory.Delete(sourceDir); // 移动完了，删除父目录
+            try
+            {
+                Directory.Delete(sourceDir); // 移动完了，删除父目录
+            }
+            catch (Exception exp)
+            {
+                log.Error(exp, "{0}", sourceDir);
+            }
         }
     }
 }

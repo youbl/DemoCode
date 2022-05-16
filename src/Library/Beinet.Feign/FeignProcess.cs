@@ -178,7 +178,16 @@ namespace Beinet.Feign
                     ThrowExp(status, httpReturn);
                 }
 
-                var ret = Config.Decoding(httpReturn, returnType);
+                object ret;
+                try
+                {
+                    ret = Config.Decoding(httpReturn, returnType);
+                }
+                catch (Exception exp)
+                {
+                    throw new Exception("http响应转类型失败:" + httpReturn, exp);
+                }
+
                 if (ret == null)
                 {
                     if (returnType.IsValueType)
