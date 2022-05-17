@@ -94,8 +94,8 @@ namespace Beinet.Feign
 
         protected virtual bool IsCamelCase(Type returnType)
         {
-            var attribute = returnType.GetCustomAttribute<CamelCaseAttribute>();
-            return attribute != null;
+            var attributes = returnType.GetCustomAttributes(typeof(CamelCaseAttribute), true);
+            return (attributes != null && attributes.Length > 0);
         }
 
         protected virtual bool IsCamelCase(object obj)
