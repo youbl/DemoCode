@@ -12,6 +12,11 @@ namespace Beinet.Core.Reflection
     /// </summary>
     public static class TypeHelper
     {
+        /// <summary>
+        /// 扫描dll时，除了当前目录，还要扫描其它哪些目录？
+        /// </summary>
+        public static List<string> AdditionalAssemblyDir { get; } = new List<string>();
+
         #region 静态字段，用于缓存收集到的数据
 
         /// <summary>
@@ -247,20 +252,42 @@ namespace Beinet.Core.Reflection
             var dir = Env.Dir;
             if (Env.IsWebApp)
                 dir = Path.Combine(Env.Dir, "bin");
+
+            // 扫描当前目录
             _arrAssemblys = ScanAssembly(dir);
+
+            // 加入当前入口程序集
+            var nowAss = Assembly.GetEntryAssembly();
+            if (nowAss != null)
+            {
+                var key = nowAss.GetName().Name;
+                if (!_arrAssemblys.ContainsKey(key))
+                {
+                    _arrAssemblys.Add(key, nowAss);
+                }
+            }
+
+            foreach (var otherDir in AdditionalAssemblyDir)
+            {
+                if (string.IsNullOrEmpty(otherDir) || !Directory.Exists(otherDir))
+                    continue;
+
+                var tmp = ScanAssembly(otherDir);
+                foreach (var item in tmp)
+                {
+                    if (!_arrAssemblys.ContainsKey(item.Key))
+                    {
+                        _arrAssemblys.Add(item.Key, item.Value);
+                    }
+                }
+            }
+
             return _arrAssemblys;
         }
 
         static Dictionary<string, Assembly> ScanAssembly(string dir, string regex = null)
         {
             var arrAssembly = new Dictionary<string, Assembly>();
-
-            // 加入当前入口程序集
-            var nowAss = Assembly.GetEntryAssembly();
-            if (nowAss != null)
-            {
-                arrAssembly.Add(nowAss.GetName().Name, nowAss);
-            }
 
             if (!Directory.Exists(dir))
             {

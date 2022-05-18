@@ -244,5 +244,25 @@ namespace Beinet.Core.FileExt
                 log.Error(exp, "{0}", sourceDir);
             }
         }
+
+        /// <summary>
+        /// 原生的Path.Combine，第2个参数不能以 斜杠开头，否则直接返回参数2
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <param name="filename"></param>
+        /// <returns></returns>
+        public static string PathCombine(string dir, string filename)
+        {
+            if (string.IsNullOrEmpty(dir))
+                return filename;
+            if (string.IsNullOrEmpty(filename))
+                return dir;
+            if (filename[0] == '/' || filename[0] == '\\')
+            {
+                filename = filename.Substring(1);
+            }
+
+            return Path.GetFullPath(Path.Combine(dir, filename));
+        }
     }
 }
