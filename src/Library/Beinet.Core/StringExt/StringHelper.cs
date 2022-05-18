@@ -79,7 +79,7 @@ namespace Beinet.Core.StringExt
                 default:
                     throw new ArgumentException("取值范围参数有误", nameof(rndType));
             }
-            return GetRndStr(length, charScope);
+            return GetRndStrWithScope(length, charScope);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Beinet.Core.StringExt
         /// <param name="length">返回字符串长度</param>
         /// <param name="charScope">字符取值范围</param>
         /// <returns></returns>
-        public static string GetRndStr(int length, string charScope = null)
+        public static string GetRndStrWithScope(int length, string charScope = null)
         {
             if (string.IsNullOrEmpty(charScope))
             {
