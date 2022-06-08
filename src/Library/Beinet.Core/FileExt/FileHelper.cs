@@ -148,10 +148,17 @@ namespace Beinet.Core.FileExt
             var tmpFile = targetFile + DateTime.Now.ToString("yyyyMMddHHmmssfffffff");
             TryDel(tmpFile);
 
+            // 如下2种方案，都会写入操作系统缓存，不是直接写入磁盘，可能导致文件内容丢失
             // File.WriteAllText(queueInfoFile, queueInfoFile, encoding);
-            using (var sw = new StreamWriter(tmpFile, false, encoding))
+            // using (var sw = new StreamWriter(tmpFile, false, encoding))
+            // {
+            //     sw.Write(content);
+            // }
+            var bytes = encoding.GetBytes(content);
+            using (var fs = new FileStream(tmpFile, FileMode.Create, FileAccess.ReadWrite, FileShare.None,
+                       1024, FileOptions.WriteThrough))
             {
-                sw.Write(content);
+                fs.Write(bytes, 0, bytes.Length);
             }
 
             Move(tmpFile, targetFile, false, backup);

@@ -192,7 +192,9 @@ namespace Beinet.Core.Serializer
             }
 
             Newtonsoft.Json.JsonSerializer serializer = new Newtonsoft.Json.JsonSerializer();
-            using (var stream = new StreamWriter(tmpfile, false, Utf8))
+            using (var fs = new FileStream(tmpfile, FileMode.Create, FileAccess.ReadWrite, FileShare.None,
+                       1024, FileOptions.WriteThrough))
+            using (var stream = new StreamWriter(fs, Utf8))
                 //using (JsonTextWriter writer = new JsonTextWriter(file))
             {
                 serializer.Serialize(stream, data);
