@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Beinet.Core;
 using Beinet.Core.Reflection;
 using Beinet.Core.Util;
+using DemoCodeConsole.WindowsDemo;
 using NLog;
 
 namespace DemoCodeConsole
@@ -47,6 +48,9 @@ namespace DemoCodeConsole
 
         static void Main()
         {
+            WindowsStateCheck.OutputWindowsLockedStatus();
+            Console.Read();
+
             // 全局异常捕获
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
