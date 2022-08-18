@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.EnumList", "Library\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoAutoLoadDll", "DemoAutoLoadDll\DemoAutoLoadDll.csproj", "{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoWinForms", "DemoWinForms\DemoWinForms.csproj", "{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
