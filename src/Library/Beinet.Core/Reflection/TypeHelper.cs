@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using Beinet.Core.Util;
 
 namespace Beinet.Core.Reflection
 {
@@ -16,6 +17,15 @@ namespace Beinet.Core.Reflection
         /// 扫描dll时，除了当前目录，还要扫描其它哪些目录？
         /// </summary>
         public static List<string> AdditionalAssemblyDir { get; } = new List<string>();
+
+        /// <summary>
+        /// 配置里写的扫描目录
+        /// </summary>
+        public const string ConfigDirName = "BeinetCore.AssemblyDirs";
+        /// <summary>
+        /// 最新版本目录配置占位符
+        /// </summary>
+        public const string ConfigDirNewlySymbol = "{NewVersionDir}";
 
         #region 静态字段，用于缓存收集到的数据
 
@@ -249,12 +259,7 @@ namespace Beinet.Core.Reflection
             if (_arrAssemblys != null)
                 return _arrAssemblys;
 
-            var dir = Env.Dir;
-            if (Env.IsWebApp)
-                dir = Path.Combine(Env.Dir, "bin");
-
-            // 扫描当前目录
-            _arrAssemblys = ScanAssembly(dir);
+            _arrAssemblys = new Dictionary<string, Assembly>();
 
             // 加入当前入口程序集
             var nowAss = Assembly.GetEntryAssembly();
@@ -267,7 +272,8 @@ namespace Beinet.Core.Reflection
                 }
             }
 
-            foreach (var otherDir in AdditionalAssemblyDir)
+            // 加载当前目录 和 外部指定目录的扫描列表
+            foreach (var otherDir in GetScanDirs())
             {
                 if (string.IsNullOrEmpty(otherDir) || !Directory.Exists(otherDir))
                     continue;
@@ -485,5 +491,134 @@ namespace Beinet.Core.Reflection
         }
 
         #endregion
+
+        private static HashSet<string> GetScanDirs()
+        {
+            var ret = new HashSet<string>();
+
+            {
+                // 添加当前目录；如果是web, 添加bin目录
+                var dir = Env.Dir;
+                if (Env.IsWebApp)
+                    dir = Path.Combine(Env.Dir, "bin");
+                dir = Path.GetFullPath(dir);
+                ret.Add(dir);
+            }
+
+            // 添加外部指定的其它目录
+            foreach (var subDir in AdditionalAssemblyDir)
+            {
+                var tmpDir = Path.GetFullPath(subDir);
+                ret.Add(tmpDir);
+            }
+
+            // 添加配置的目录
+            foreach (var configDir in GetConfigDirs())
+            {
+                var tmpDir = Path.GetFullPath(configDir);
+                ret.Add(tmpDir);
+            }
+
+            return ret;
+        }
+
+        private static List<string> GetConfigDirs()
+        {
+            var configDirs = ConfigHelper.GetSetting(ConfigDirName);
+            if (string.IsNullOrEmpty(configDirs))
+            {
+                return new List<string>();
+            }
+
+            var ret = new List<string>();
+            foreach (var item in configDirs.Split(',', ';'))
+            {
+                var configDir = item.Trim();
+                if (configDir.Length == 0)
+                    continue;
+
+                // 查找最新版本目录
+                if (configDir == ConfigDirNewlySymbol)
+                {
+                    var newlyDir = FindNewlyDir(Env.Dir);
+                    if (!string.IsNullOrEmpty(newlyDir))
+                        ret.Add(newlyDir);
+                    continue;
+                }
+
+                if (configDir.Contains(':'))
+                {
+                    // 有冒号表示绝对路径
+                    ret.Add(configDir);
+                    continue;
+                }
+
+                ret.Add(Path.Combine(Env.Dir, configDir));
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// 在指定目录下，查找版本号最新的一个目录
+        /// </summary>
+        /// <param name="topDir"></param>
+        /// <returns></returns>
+        static string FindNewlyDir(string topDir)
+        {
+            var dir = topDir;
+            var subdirs = Directory.GetDirectories(dir);
+            // Array.Sort(subdirs, CompareTo);
+
+            // 只收集版本号目录，如1.2.3.4这种目录名
+            var versionDirs = new List<string>();
+            foreach (var item in subdirs)
+            {
+                var subdirName = Path.GetFileName(item);
+                if (!string.IsNullOrEmpty(subdirName) && Regex.IsMatch(subdirName, @"^(\d+\.)*\d+$"))
+                {
+                    versionDirs.Add(item);
+                }
+            }
+
+            if (versionDirs.Count <= 0)
+            {
+                return "";
+            }
+
+            // 按目录名正序排序
+            versionDirs.Sort(CompareTo);
+
+            // 然后返回最后一个目录
+            var ret = versionDirs[versionDirs.Count - 1];
+            return ret;
+        }
+
+        private static int CompareTo(string version1, string version2)
+        {
+            if (version1 == null || version2 == null)
+                throw new Exception("对比数据不能为空");
+
+            var sourceArr = version1.Split('.');
+            var targetArr = version2.Split('.');
+
+            // 4段版本数字
+            for (var i = 0; i < 4; i++)
+            {
+                var source = GetSegVer(sourceArr, i);
+                var target = GetSegVer(targetArr, i);
+                if (source != target)
+                    return source - target;
+            }
+
+            return 0;
+        }
+
+        private static int GetSegVer(string[] verArr, int idx)
+        {
+            if (verArr.Length > idx && int.TryParse(verArr[idx], out var ret))
+                return ret;
+            return 0;
+        }
     }
 }
