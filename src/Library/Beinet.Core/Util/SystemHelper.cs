@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Management;
+using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32;
 //using Microsoft.Win32;
 using NLog;
 
@@ -16,6 +18,10 @@ namespace Beinet.Core.Util
 
         // 用于计算可用内存
         private static PerformanceCounter ramCounter;
+
+        [DllImport("winbrand.dll", CharSet = CharSet.Unicode)]
+        // [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+        static extern string BrandingFormatString(string format);
 
         static SystemHelper()
         {
@@ -215,10 +221,7 @@ namespace Beinet.Core.Util
         {
             var mos = "SELECT SerialNumber FROM Win32_BaseBoard";
             var result = new StringBuilder();
-            ManagementObjectQuery(mos, record =>
-            {
-                Append(result, record["SerialNumber"]);
-            }, 1);
+            ManagementObjectQuery(mos, record => { Append(result, record["SerialNumber"]); }, 1);
 
             return result.ToString();
         }
@@ -313,6 +316,37 @@ namespace Beinet.Core.Util
             // if (standardProfile != null)
             //     standardProfile.SetValue("EnableFirewall", val, RegistryValueKind.DWord);
             // return true;
+        }
+
+        /// <summary>
+        /// 获取系统版本号
+        /// </summary>
+        /// <returns></returns>
+        public static string GetOsVersion()
+        {
+            try
+            {
+                const string regPath = @"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion";
+                string winName;
+                try
+                {
+                    winName = BrandingFormatString("%WINDOWS_LONG%");
+                }
+                catch
+                {
+                    var tmp = Registry.GetValue(regPath, "ProductName", "");
+                    winName = Convert.ToString(tmp);
+                }
+
+                // WIN11是 21H2
+                var displayVersion = Registry.GetValue(regPath, "DisplayVersion", "");
+                var interVer = Registry.GetValue(regPath, "BuildLab", "");
+                return winName + " " + displayVersion + " " + interVer;
+            }
+            catch
+            {
+                return Environment.OSVersion.VersionString;
+            }
         }
     }
 }

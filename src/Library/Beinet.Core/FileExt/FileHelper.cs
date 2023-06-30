@@ -72,7 +72,6 @@ namespace Beinet.Core.FileExt
             return Regex.Replace(fileName, INVALID_CH, "_");
         }
 
-
         /// <summary>
         /// 遍历指定文件的每一行，并进行处理，并返回处理行数
         /// </summary>
@@ -253,6 +252,34 @@ namespace Beinet.Core.FileExt
         }
 
         /// <summary>
+        /// 把源目录下的所有子目录和文件，拷贝到目标目录下
+        /// </summary>
+        /// <param name="sourceDir"></param>
+        /// <param name="targetDir"></param>
+        /// <exception cref="Exception"></exception>
+        public static void CopyDir(string sourceDir, string targetDir)
+        {
+            if (!Directory.Exists(sourceDir))
+                throw new Exception("源目录不存在:" + sourceDir);
+            if (!Directory.Exists(targetDir))
+                Directory.CreateDirectory(targetDir);
+
+            // 建立所有目录
+            foreach (string dir in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string dirToCreate = dir.Replace(sourceDir, targetDir);
+                if (!Directory.Exists(dirToCreate))
+                    Directory.CreateDirectory(dirToCreate);
+            }
+
+            // 复制所有文件
+            foreach (string newPath in Directory.GetFiles(sourceDir, "*.*", SearchOption.AllDirectories))
+            {
+                File.Copy(newPath, newPath.Replace(sourceDir, targetDir), true);
+            }
+        }
+
+        /// <summary>
         /// 原生的Path.Combine，第2个参数不能以 斜杠开头，否则直接返回参数2
         /// </summary>
         /// <param name="dir"></param>
@@ -270,6 +297,25 @@ namespace Beinet.Core.FileExt
             }
 
             return Path.GetFullPath(Path.Combine(dir, filename));
+        }
+
+        /// <summary>
+        /// 判断指定的目录是否为空
+        /// </summary>
+        /// <param name="dir"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static bool IsEmptyDir(string dir)
+        {
+            if (string.IsNullOrEmpty(dir))
+                throw new Exception("参数不能为空");
+            if (!Directory.Exists(dir))
+                return true;
+
+            if (Directory.GetFiles(dir).Length > 0)
+                return false;
+
+            return Directory.GetDirectories(dir).Length == 0;
         }
     }
 }
