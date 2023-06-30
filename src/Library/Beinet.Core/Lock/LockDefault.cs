@@ -5,7 +5,8 @@ using System.Threading.Tasks;
 namespace Beinet.Core.Lock
 {
     /// <summary>
-    /// 
+    /// 默认加锁实现，使用信号量.
+    /// 注：不支持重复锁
     /// </summary>
     public class LockDefault : ILock
     {

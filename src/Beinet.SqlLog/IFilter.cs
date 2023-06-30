@@ -1,6 +1,4 @@
 ﻿using System.Data.Common;
-using System.Text;
-using NLog;
 
 namespace Beinet.SqlLog
 {
@@ -9,13 +7,15 @@ namespace Beinet.SqlLog
         /// <summary>
         /// 执行sql之前的方法
         /// </summary>
-        /// <param name="command"></param>
+        /// <param name="command">执行的命令对象</param>
         void BeforeExecute(DbCommand command);
 
         /// <summary>
         /// 执行sql之后的方法
         /// </summary>
-        /// <param name="command"></param>
-        void AfterExecute(DbCommand command);
+        /// <param name="command">执行的命令对象</param>
+        /// <param name="result">执行的结果</param>
+        /// <param name="costMillis">执行耗时</param>
+        void AfterExecute(DbCommand command, object result, long costMillis);
     }
 }

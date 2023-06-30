@@ -32,17 +32,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\NLog.4.6.3\lib\net45\NLog.dll</HintPath>
+      <HintPath>..\..\packages\NLog.4.7.10\lib\net45\NLog.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.ServiceModel" />
     <Reference Include="System.Transactions" />
@@ -54,19 +55,25 @@
     <Compile Include="Cron\ScheduledAttribute.cs" />
     <Compile Include="Database\BaseSqlHelper.cs" />
     <Compile Include="Database\SqlHelper.cs" />
+    <Compile Include="DateExt\DateHelper.cs" />
+    <Compile Include="EnumExt\EnumHelper.cs" />
     <Compile Include="Env.cs" />
+    <Compile Include="FileExt\FileHelper.cs" />
+    <Compile Include="Runs\RunableUtil.cs" />
+    <Compile Include="Runs\RunableBase.cs" />
+    <Compile Include="Logging\LogHelper.cs" />
+    <Compile Include="MQBase\Publisher.cs" />
+    <Compile Include="NumberExt\NumHelper.cs" />
+    <Compile Include="Reflection\Scanner.cs" />
+    <Compile Include="RetryHelper.cs" />
     <Compile Include="IRunable.cs" />
     <Compile Include="Lock\LockDefault.cs" />
     <Compile Include="Lock\ILock.cs" />
-    <Compile Include="Logging\NLogHelper.cs" />
-    <Compile Include="Logging\LoggerDefault.cs" />
-    <Compile Include="Logging\ILogger.cs" />
     <Compile Include="MQBase\IMqConsumer.cs" />
     <Compile Include="MQBase\IMqProducer.cs" />
     <Compile Include="MQBase\Message.cs" />
     <Compile Include="MQBase\Producer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Reflection\ClassLoader.cs" />
     <Compile Include="Reflection\FastMethodInfo.cs" />
     <Compile Include="Reflection\MethodHelper.cs" />
     <Compile Include="Reflection\IGetter.cs" />
@@ -74,16 +81,21 @@
     <Compile Include="Reflection\PropertyGetSetHelper.cs" />
     <Compile Include="Reflection\ReflectionCache.cs" />
     <Compile Include="Reflection\TypeHelper.cs" />
+    <Compile Include="Serializer\EnumDescriptionConverter.cs" />
     <Compile Include="Serializer\ISerializer.cs" />
     <Compile Include="Serializer\JsonSerializer.cs" />
+    <Compile Include="StringExt\StringHelper.cs" />
     <Compile Include="Util\ConfigHelper.cs" />
-    <Compile Include="Util\CryptoHelper.cs" />
-    <Compile Include="Util\FileHelper.cs" />
+    <Compile Include="CryptExt\CryptoHelper.cs" />
     <Compile Include="Util\IpHelper.cs" />
+    <Compile Include="Util\SystemHelper.cs" />
     <Compile Include="Util\WebHelper.cs" />
+    <Compile Include="Xml\XmlHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Beinet.Core.nuspec" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

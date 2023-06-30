@@ -1,0 +1,35 @@
+﻿/* 存储表信息的表结构 */
+CREATE TABLE `dbdata` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `dbname` varchar(50) NOT NULL COMMENT '数据库名',
+  `tbname` varchar(50) NOT NULL COMMENT '表名',
+  `rownum` bigint(20) NOT NULL COMMENT '行数',
+  `avg_len` bigint(20) NOT NULL COMMENT '平均行长度',
+  `data_len` bigint(20) NOT NULL COMMENT '数据长度',
+  `index_len` bigint(20) NOT NULL COMMENT '索引长度',
+  `auto_idx` bigint(20) NOT NULL COMMENT '自增当前值',
+  `CreationTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `db_tb` (`dbname`,`tbname`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='数据库采集';
+
+
+/* 如果是采集当前实例，可以直接用这个SQL采集 */
+INSERT INTO `dbdata` (
+  `dbname`,
+  `tbname`,
+  `rownum`,
+  `avg_len`,
+  `data_len`,
+  `index_len`,
+  `auto_idx`
+)
+SELECT t.table_schema, t.table_name, t.table_rows, t.avg_row_length, t.data_length , t.index_length, t.auto_increment
+FROM information_schema.tables t
+WHERE t.`TABLE_SCHEMA` NOT IN ('performance_schema', 'sys', 'information_schema', 'mysql');
+
+
+/* 按每2次采集的增长行数，进行查询，看哪个表的增长最快 */
+SELECT a.*, 
+  a.rownum-(SELECT rownum FROM dbdata b WHERE a.dbname=b.dbname AND a.tbname=b.tbname AND b.creationTime<a.creationTime ORDER BY a.id DESC LIMIT 1) incRow
+ FROM dbdata a ORDER BY incRow DESC;

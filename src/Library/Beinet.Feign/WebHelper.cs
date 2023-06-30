@@ -28,15 +28,17 @@ namespace Beinet.Feign
         /// <param name="headers">要传输的header清单</param>
         /// <param name="interceptors">拦截器清单</param>
         /// <param name="level">日志级别</param>
+        /// <param name="status">http响应码</param>
         /// <returns></returns>
         public static string GetPage(string url, string method, string postStr,
             Dictionary<string, string> headers,
             List<IRequestInterceptor> interceptors,
-            LogLevel level)
+            LogLevel level,
+            out int status)
         {
             if (!IsUrl(url))
                 url = "http://" + url;
-            
+
             var isGet = method == "GET"; // GET时，不对参数进行序列化处理
 
             var request = (HttpWebRequest) WebRequest.Create(url);
@@ -68,7 +70,14 @@ namespace Beinet.Feign
             {
                 foreach (var interceptor in interceptors)
                 {
-                    interceptor.BeforeRequest(request);
+                    try
+                    {
+                        interceptor.BeforeRequest(request, postStr);
+                    }
+                    catch (Exception exp)
+                    {
+                        throw new Exception(interceptor.GetType().FullName + " BeforeRequest出错:", exp);
+                    }
                 }
             }
 
@@ -112,6 +121,7 @@ namespace Beinet.Feign
                         sb.AppendFormat("  {0}={1}\n", header, request.Headers[header]);
                     }
                 }
+
                 return sb.ToString();
             });
 
@@ -119,11 +129,29 @@ namespace Beinet.Feign
             {
                 using (var response = (HttpWebResponse) request.GetResponse())
                 {
+                    string ret;
+                    status = (int) response.StatusCode;
+                    if (status == 301 || status == 302)
+                    {
+                        ret = response.Headers.Get("Location") ?? "";
+                    }
+                    else
+                    {
+                        ret = GetResponseString(response);
+                    }
+
                     if (interceptors != null)
                     {
                         foreach (var interceptor in interceptors)
                         {
-                            interceptor.AfterRequest(request, response, null);
+                            try
+                            {
+                                interceptor.AfterRequest(request, response, ret, null);
+                            }
+                            catch (Exception exp)
+                            {
+                                throw new Exception(interceptor.GetType().FullName + " AfterRequest出错:", exp);
+                            }
                         }
                     }
 
@@ -135,7 +163,6 @@ namespace Beinet.Feign
                         sb.AppendFormat("  {0}={1}\n", header, response.Headers[header]);
                     }
 
-                    var ret = GetResponseString(response);
                     sb.Append(ret);
                     _logger.Log(level, sb.ToString);
 
@@ -146,11 +173,20 @@ namespace Beinet.Feign
             {
                 if (interceptors != null)
                 {
+                    var responseStr = "";
+                    HttpWebResponse response = null;
+                    if (exp is WebException webExp && webExp.Response != null && webExp.Response is HttpWebResponse)
+                    {
+                        response = (HttpWebResponse) webExp.Response;
+                        responseStr = GetResponseString(response);
+                    }
+
                     foreach (var interceptor in interceptors)
                     {
-                        interceptor.AfterRequest(request, null, exp);
+                        interceptor.AfterRequest(request, response, responseStr, exp);
                     }
                 }
+
                 throw;
             }
         }
@@ -203,6 +239,5 @@ namespace Beinet.Feign
             //                return false;
             return true;
         }
-
     }
 }

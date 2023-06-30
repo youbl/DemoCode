@@ -128,5 +128,19 @@ namespace Beinet.RepositoryTest
             Assert.AreEqual(TABLE_ROWNUM, cnt);
         }
 
+        [TestMethod]
+        public void QueryAttTest()
+        {
+            var cnt = repository.DoCount();
+            Assert.AreEqual(repository.Count(), cnt);
+
+            var arr = repository.SelectAll(9, 16);
+            Assert.AreEqual(2, arr.Length);
+
+            var entity = repository.SelectFirst(2, 16);
+            Assert.IsNotNull(entity);
+            Assert.AreEqual("包间", entity.AreaName);
+        }
+
     }
 }

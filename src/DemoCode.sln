@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29326.143
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoCodeConsole", "DemoCodeConsole\DemoCodeConsole.csproj", "{E1791942-7D6F-44EF-B2A0-FDE262029326}"
 EndProject
@@ -32,6 +32,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.CronDemoConsole", "Test\Beinet.CronDemoConsole\Beinet.CronDemoConsole.csproj", "{8522A38D-F561-4C73-AC9B-699B0BF518C4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.RepositoryTest", "Test\Beinet.RepositoryTest\Beinet.RepositoryTest.csproj", "{D5DB1480-40BE-40B9-B2A0-CE5B7E900379}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Beinet.EnumList", "Library\Beinet.EnumList\Beinet.EnumList.csproj", "{71FC11DE-F8C6-44A8-900A-8F4A15A316DE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoAutoLoadDll", "DemoAutoLoadDll\DemoAutoLoadDll.csproj", "{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DemoWinForms", "DemoWinForms\DemoWinForms.csproj", "{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -91,6 +97,18 @@ Global
 		{D5DB1480-40BE-40B9-B2A0-CE5B7E900379}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5DB1480-40BE-40B9-B2A0-CE5B7E900379}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5DB1480-40BE-40B9-B2A0-CE5B7E900379}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71FC11DE-F8C6-44A8-900A-8F4A15A316DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71FC11DE-F8C6-44A8-900A-8F4A15A316DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71FC11DE-F8C6-44A8-900A-8F4A15A316DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71FC11DE-F8C6-44A8-900A-8F4A15A316DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41DC5E42-BF97-4FED-92DC-985AEBA7C5F9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A98DDED4-EAB2-4B9A-AB9B-F4744FEBF8C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -106,6 +124,7 @@ Global
 		{28A1B41F-433E-47F1-9282-D09EFEE21328} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
 		{8522A38D-F561-4C73-AC9B-699B0BF518C4} = {E8592A62-126C-44BB-8F51-A59486CE376D}
 		{D5DB1480-40BE-40B9-B2A0-CE5B7E900379} = {E8592A62-126C-44BB-8F51-A59486CE376D}
+		{71FC11DE-F8C6-44A8-900A-8F4A15A316DE} = {6B3C6B37-D026-4488-9FF7-7ABBB396D80D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {199BBEEA-CF0A-41D7-B203-5A319CBD9F0F}

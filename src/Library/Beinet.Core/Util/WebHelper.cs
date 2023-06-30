@@ -11,6 +11,7 @@ using System.Web.UI;
 using System.IO;
 using System.Threading.Tasks;
 using System.Web;
+using Beinet.Core.FileExt;
 
 namespace Beinet.Core.Util
 {

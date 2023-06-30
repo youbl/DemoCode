@@ -72,6 +72,11 @@ namespace Beinet.Repository
         /// </summary>
         private Dictionary<MethodInfo, object> _arrJpaMethods;
 
+        /// <summary>
+        /// 执行自定义方法的仓储方法
+        /// </summary>
+        private MethodInfo _jpaCustomberMethod;
+
         private void Init()
         {
             if (RepositoryType == null || KeyType == null || EntityType == null)
@@ -87,9 +92,10 @@ namespace Beinet.Repository
             _jpaRepositoryBase = Activator.CreateInstance(runnerType);
 
             ((RepositoryProperty) _jpaRepositoryBase).Data = _data;
-            ((RepositoryProperty)_jpaRepositoryBase).DataSource = helper.ParseConnectionString(RepositoryType);
+            ((RepositoryProperty) _jpaRepositoryBase).DataSource = helper.ParseConnectionString(RepositoryType);
 
-            _arrJpaMethods = helper.ParseRepostory(RepositoryType, _jpaRepositoryBase.GetType());
+            _arrJpaMethods = helper.ParseRepostory(RepositoryType, _jpaRepositoryBase.GetType(), _data);
+            _jpaCustomberMethod = helper.GetCustomerMethod(_jpaRepositoryBase.GetType());
         }
 
         public object Process(MethodInfo method, object[] parameters)
@@ -101,8 +107,11 @@ namespace Beinet.Repository
             if (baseMethod is MethodInfo baseMethodInfo)
                 return baseMethodInfo.Invoke(_jpaRepositoryBase, parameters);
 
-            // todo：调用自定义方法，根据命名规则处理
+            // 调用自定义方法，根据命名规则处理
+            if (baseMethod is CustomData data)
+                return _jpaCustomberMethod.Invoke(_jpaRepositoryBase, new Object[] { data, parameters });
 
+            // 返回默认值
             return TypeHelper.GetDefaultValue(method.ReturnType);
         }
 

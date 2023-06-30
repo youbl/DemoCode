@@ -5,15 +5,17 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Beinet.Core;
-using Beinet.Core.Logging;
 using Beinet.Core.Reflection;
 using Beinet.Core.Util;
+using DemoCodeConsole.WindowsDemo;
+using NLog;
 
 namespace DemoCodeConsole
 {
     class Program
     {
-        private static ILogger logger = new LoggerDefault();
+        private static ILogger logger = LogManager.GetCurrentClassLogger();
+
         private static List<IRunable> runners;
         /// <summary>
         /// 从配置中读取要运行的类列表
@@ -46,6 +48,9 @@ namespace DemoCodeConsole
 
         static void Main()
         {
+            WindowsStateCheck.OutputWindowsLockedStatus();
+            Console.Read();
+
             // 全局异常捕获
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -77,7 +82,7 @@ namespace DemoCodeConsole
 最大工作线程数/IO线程数:{maxworkthreads.ToString()}/{maxiocpthreads.ToString()}
 可用工作线程数/IO线程数:{aviworkthreads.ToString()}/{aviiocpthreads.ToString()}";
             Console.WriteLine(msg);
-            logger.Custom("startend\\", msg);
+            logger.Info(msg);
 
         }
 

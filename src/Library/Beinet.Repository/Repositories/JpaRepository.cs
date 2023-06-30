@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Data;
 
 namespace Beinet.Repository.Repositories
 {
@@ -7,7 +8,7 @@ namespace Beinet.Repository.Repositories
     /// </summary>
     /// <typeparam name="T">实体类型</typeparam>
     /// <typeparam name="ID">主键类型</typeparam>
-    public interface JpaRepository<T, ID>// where T : new()
+    public interface JpaRepository<T, ID> // where T : new()
     {
         /// <summary>
         /// 返回所有记录
@@ -91,5 +92,21 @@ namespace Beinet.Repository.Repositories
         //void deleteAllInBatch();
 
         //T getOne(ID aID);
+
+        /// <summary>
+        /// 执行SQL，返回首行
+        /// </summary>
+        /// <param name="sql">sql</param>
+        /// <param name="parameters">参数</param>
+        /// <returns>数据</returns>
+        T QueryFirst(string sql, params IDbDataParameter[] parameters);
+
+        /// <summary>
+        /// 执行SQL，返回数组
+        /// </summary>
+        /// <param name="sql">sql</param>
+        /// <param name="parameters">参数</param>
+        /// <returns>数据</returns>
+        List<T> Query(string sql, params IDbDataParameter[] parameters);
     }
 }

@@ -12,7 +12,7 @@ namespace DemoCodeConsole.Demo
         public void Process(Message msg)
         {
             var data = (DataDemo) msg.Data;
-            Console.WriteLine($"{Thread.CurrentThread.ManagedThreadId}:ConsumerTDemo收到消息:{msg.PublicTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}\r\n  {data.Xxx}\r\n");
+            Console.WriteLine($"======{Thread.CurrentThread.ManagedThreadId}:ConsumerTDemo收到消息:{msg.PublicTime.ToString("yyyy-MM-dd HH:mm:ss.fff")}\r\n  {data.Xxx}\r\n");
         }
     }
 
